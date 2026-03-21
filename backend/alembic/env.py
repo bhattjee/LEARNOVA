@@ -10,6 +10,15 @@ from sqlalchemy import create_engine, pool
 
 from app.core.config import settings
 from app.core.database import Base
+from app.models import (  # noqa: F401 — ORM metadata
+    attachment_model,
+    course_model,
+    enrollment_model,
+    lesson_model,
+    lesson_progress_model,
+    quiz_model,
+    user_model,
+)
 
 config = context.config
 if config.config_file_name is not None:

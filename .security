@@ -31,7 +31,7 @@ JWT:
   header:             Authorization: Bearer <token>
 
 PASSWORD_HASHING:
-  library:  bcrypt (passlib[bcrypt])
+  library:  bcrypt (direct, app/core/security.py)
   rounds:   12
   NEVER:    store plain text, MD5, SHA1, or unsalted hashes
 

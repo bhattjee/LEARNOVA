@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Learnova</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1D4ED8',
+                        'dark-gray': '#464749',
+                        'light-gray': '#C5CAD3',
+                    },
+                    fontFamily: { sans: ['Source Sans Pro', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white text-dark-gray font-sans">
+    <nav class="sticky top-0 z-50 bg-white border-b border-light-gray h-16 flex justify-between items-center px-8 shadow-sm">
+        <a href="index.html" class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <i data-lucide="graduation-cap" class="text-white w-5 h-5"></i>
+            </div>
+            <span class="text-xl font-bold text-primary">Learnova</span>
+        </a>
+        <div class="flex space-x-8 text-sm font-medium">
+            <a href="index.html" class="hover:text-primary transition-all">Home</a>
+            <a href="blog.html" class="hover:text-primary transition-all">Blog</a>
+            <a href="about.html" class="text-primary">About Us</a>
+            <a href="privacy.html" class="hover:text-primary transition-all">Privacy Policy</a>
+        </div>
+        <button class="bg-primary text-white px-6 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 transition-all">Login</button>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-20 text-center">
+        <h1 class="text-5xl font-bold mb-8">Empowering the world to learn</h1>
+        <p class="text-xl text-gray-500 leading-relaxed mb-12">Learnova was founded with a simple goal: to make premium education accessible to everyone, everywhere. We believe that learning is the key to personal and professional growth.</p>
+        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200" class="w-full rounded-3xl shadow-2xl mb-20 border border-light-gray">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-left">
+            <div>
+                <i data-lucide="users" class="w-8 h-8 text-primary mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">Global Community</h3>
+                <p class="text-sm text-gray-400">Join over 12 million learners from 190 countries around the world.</p>
+            </div>
+            <div>
+                <i data-lucide="shield-check" class="w-8 h-8 text-primary mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">Verified Content</h3>
+                <p class="text-sm text-gray-400">All our courses are created by industry experts and top universities.</p>
+            </div>
+            <div>
+                <i data-lucide="sparkles" class="w-8 h-8 text-primary mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">Innovation First</h3>
+                <p class="text-sm text-gray-400">Our interactive learning engine makes complex topics easy to grasp.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark-gray text-white py-12 text-center text-xs text-gray-500">
+        © 2024 Learnova Inc. All rights reserved.
+    </footer>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

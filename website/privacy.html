@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Learnova</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1D4ED8',
+                        'dark-gray': '#464749',
+                        'light-gray': '#C5CAD3',
+                    },
+                    fontFamily: { sans: ['Source Sans Pro', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white text-dark-gray font-sans">
+    <nav class="sticky top-0 z-50 bg-white border-b border-light-gray h-16 flex justify-between items-center px-8 shadow-sm">
+        <a href="index.html" class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <i data-lucide="graduation-cap" class="text-white w-5 h-5"></i>
+            </div>
+            <span class="text-xl font-bold text-primary">Learnova</span>
+        </a>
+        <div class="flex space-x-8 text-sm font-medium">
+            <a href="index.html" class="hover:text-primary transition-all">Home</a>
+            <a href="blog.html" class="hover:text-primary transition-all">Blog</a>
+            <a href="about.html" class="hover:text-primary transition-all">About Us</a>
+            <a href="privacy.html" class="text-primary font-bold">Privacy Policy</a>
+        </div>
+        <button class="bg-primary text-white px-6 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 transition-all">Login</button>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-20">
+        <h1 class="text-4xl font-bold mb-8">Privacy Policy</h1>
+        <div class="prose max-w-none text-gray-500 space-y-6">
+            <p>At Learnova, we take your privacy seriously. This policy explains how we collect, use, and protect your personal information.</p>
+            <h2 class="text-2xl font-bold text-dark-gray mt-10">1. Information We Collect</h2>
+            <p>We collect information you provide directly to us, such as when you create an account, enroll in a course, or participate in a quiz.</p>
+            <h2 class="text-2xl font-bold text-dark-gray mt-10">2. How We Use Your Information</h2>
+            <p>We use your information to provide our services, communicate with you, and improve our platform.</p>
+            <h2 class="text-2xl font-bold text-dark-gray mt-10">3. Data Security</h2>
+            <p>We implement a variety of security measures to maintain the safety of your personal information.</p>
+        </div>
+    </main>
+
+    <footer class="bg-dark-gray text-white py-12 text-center text-xs text-gray-500">
+        © 2024 Learnova Inc. All rights reserved.
+    </footer>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

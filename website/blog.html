@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog & Insights - Learnova</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1D4ED8',
+                        'dark-gray': '#464749',
+                        'light-gray': '#C5CAD3',
+                        'secondary-red': '#EF4444',
+                        'accent-orange': '#F5AA29',
+                        'accent-purple': '#7632EC',
+                        'accent-green': '#058E61',
+                    },
+                    fontFamily: {
+                        sans: ['Source Sans Pro', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .modal-overlay {
+            background: rgba(70, 71, 73, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: #FFFFFF;
+            border-radius: 3rem;
+            max-width: 900px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 4rem;
+            position: relative;
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+            transition: scrollbar-color 0.3s ease;
+        }
+        .modal-content:hover {
+            scrollbar-color: #464749 transparent;
+        }
+        /* Custom Scrollbar for Webkit Browsers */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 2rem 0;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: transparent;
+            border-radius: 20px;
+            border: 2px solid #FFFFFF;
+            transition: background 0.3s ease;
+        }
+        .modal-content:hover::-webkit-scrollbar-thumb {
+            background: #464749;
+        }
+
+        /* Global Hover-Only Scrollbar */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+            transition: scrollbar-color 0.3s ease;
+        }
+        *:hover {
+            scrollbar-color: #464749 transparent;
+        }
+        /* Webkit Browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: transparent;
+            border-radius: 20px;
+            transition: background 0.3s ease;
+        }
+        *:hover::-webkit-scrollbar-thumb {
+            background: #464749;
+        }
+    </style>
+</head>
+<body class="bg-white text-dark-gray font-sans selection:bg-primary/10 overflow-x-hidden">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-light-gray h-20 flex items-center px-6 sm:px-12">
+        <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
+                    <i data-lucide="graduation-cap" class="text-white w-6 h-6"></i>
+                </div>
+                <span class="text-3xl font-bold text-primary tracking-tighter">Learnova</span>
+            </a>
+            <div class="hidden lg:flex space-x-12 text-sm font-bold uppercase tracking-widest text-[#464749]">
+                <a href="index.html" class="hover:text-primary transition-all">Learning Hub</a>
+                <a href="index.html#instructor" class="hover:text-primary transition-all">Instructor Studio</a>
+                <a href="blog.html" class="text-primary hover:opacity-70 transition-all">Blog</a>
+            </div>
+            <button class="bg-primary text-white px-8 py-3 rounded-2xl text-base font-bold shadow-2xl shadow-primary/30 hover:bg-blue-800 hover:scale-105 transition-all">Get Started</button>
+        </div>
+    </nav>
+
+    <!-- Blog Hero -->
+    <section class="py-24 bg-gray-50/50 px-6 sm:px-12 border-b border-light-gray">
+        <div class="max-w-7xl mx-auto text-center">
+            <span class="text-xs font-bold text-accent-orange uppercase tracking-[0.3em] mb-4 block">PLATFORM INSIGHTS</span>
+            <h1 class="text-7xl lg:text-8xl font-bold tracking-tighter mb-8 leading-[0.9]">Learnova <span class="text-primary">Blog.</span></h1>
+            <p class="text-2xl text-gray-500 max-w-2xl mx-auto font-medium">Deep dives into the future of education, platform updates, and successful instructor stories.</p>
+        </div>
+    </section>
+
+    <!-- Blog Content Section -->
+    <main class="max-w-7xl mx-auto px-6 sm:px-12 py-24">
+        <!-- Blog Card 1 (Featured) -->
+        <div onclick="openBlogModal('featured')" class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center mb-32 group cursor-pointer hover:bg-gray-50/50 p-8 rounded-[4rem] transition-all">
+            <div class="relative rounded-[3rem] overflow-hidden shadow-2xl border-2 border-light-gray group-hover:border-primary transition-all duration-700 aspect-video">
+                <img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000">
+                <div class="absolute inset-0 bg-gradient-to-t from-dark-gray/80 via-transparent to-transparent flex items-end p-12">
+                     <span class="bg-accent-purple text-white text-xs font-bold px-4 py-2 rounded-xl border border-white/20 uppercase tracking-widest">Featured Story</span>
+                </div>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-primary uppercase tracking-widest mb-6">MARCH 2024 · 12 MIN READ</p>
+                <h2 class="text-5xl font-bold tracking-tight mb-8 leading-[1.1] group-hover:text-primary transition-all">The Asymmetrical Learning Revolution: Beyond the Grid.</h2>
+                <p class="text-xl text-gray-400 font-medium mb-12 leading-relaxed">The traditional education system has long been structured like a grid—uniform, linear, and standardized for all learners. However, the asymmetrical learning revolution challenges this...</p>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-6">
+                        <img src="https://i.pravatar.cc/150?u=sarah" class="w-16 h-16 rounded-full border-2 border-primary">
+                        <div>
+                            <h4 class="text-lg font-bold">Sarah Jenkins</h4>
+                            <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Lead Product Designer</p>
+                        </div>
+                    </div>
+                    <button class="text-primary font-bold flex items-center gap-2 text-xl group-hover:translate-x-2 transition-all">Read More <i data-lucide="arrow-right" class="w-6 h-6"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-16">
+            <!-- Article 1: Course Dashboard -->
+            <div onclick="openBlogModal('dashboard')" class="group cursor-pointer p-6 rounded-[3rem] hover:bg-gray-50 transition-all">
+                <div class="rounded-[2.5rem] overflow-hidden mb-10 border-2 border-light-gray group-hover:border-primary transition-all aspect-square relative">
+                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800" class="w-full h-full object-cover group-hover:scale-105 transition-all">
+                    <div class="absolute top-6 left-6 flex gap-2">
+                        <span class="bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-primary uppercase tracking-widest border border-primary/20">Studio Tip</span>
+                    </div>
+                </div>
+                <h3 class="text-3xl font-bold mb-6 tracking-tight group-hover:text-primary transition-all">Mastering the Course Dashboard.</h3>
+                <p class="text-lg text-gray-500 font-medium mb-8 line-clamp-3">A practical data-driven guide for instructors on using the new Kanban-style management tools effectively to scale reach.</p>
+                <span class="text-primary font-bold flex items-center gap-2 text-lg">Read Blog <i data-lucide="arrow-right" class="w-5 h-5"></i></span>
+            </div>
+
+            <!-- Article 2: AI-Pathways -->
+            <div onclick="openBlogModal('ai-pathways')" class="group cursor-pointer p-6 rounded-[3rem] hover:bg-gray-50 transition-all">
+                <div class="rounded-[2.5rem] overflow-hidden mb-10 border-2 border-light-gray group-hover:border-primary transition-all aspect-square relative">
+                    <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=800" class="w-full h-full object-cover group-hover:scale-105 transition-all">
+                    <div class="absolute top-6 left-6 flex gap-2">
+                         <span class="bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-accent-green uppercase tracking-widest border border-accent-green/20">Engineering</span>
+                    </div>
+                </div>
+                <h3 class="text-3xl font-bold mb-6 tracking-tight group-hover:text-primary transition-all">AI-Pathways: The New Standard.</h3>
+                <p class="text-lg text-gray-500 font-medium mb-8 line-clamp-3">Our engineering lead breaks down the neural logic behind personalized learner streaks and rank award systems.</p>
+                <span class="text-primary font-bold flex items-center gap-2 text-lg">Read Blog <i data-lucide="arrow-right" class="w-5 h-5"></i></span>
+            </div>
+
+            <!-- Article 3: Podcast -->
+            <div onclick="openBlogModal('podcast')" class="group cursor-pointer p-6 rounded-[3rem] hover:bg-gray-50 transition-all">
+                <div class="rounded-[2.5rem] overflow-hidden mb-10 border-2 border-light-gray group-hover:border-primary transition-all aspect-square relative text-center">
+                    <img src="C:\Users\jbhat\.gemini\antigravity\brain\caa43e45-d546-4721-a6e3-e9c8c339ee35\learnova_podcast_studio_1774105937191.png" class="w-full h-full object-cover group-hover:scale-105 transition-all">
+                    <div class="absolute inset-0 bg-dark-gray/40 flex flex-col items-center justify-center p-10">
+                        <i data-lucide="mic-2" class="w-20 h-20 text-accent-orange mb-6"></i>
+                        <h4 class="text-2xl font-bold tracking-tight text-white">Podcast: The Future of Remote Learning</h4>
+                        <p class="text-sm text-white/70 font-bold uppercase tracking-[0.2em] mt-8">Episode 42 · Live Now</p>
+                    </div>
+                </div>
+                <h3 class="text-3xl font-bold mb-6 tracking-tight group-hover:text-primary transition-all">Voices from Learnova Studio.</h3>
+                <p class="text-lg text-gray-500 font-medium mb-8 line-clamp-3">Interviewing the top 1% of instructors about how they scaled their educational brands from zero to global impact.</p>
+                <span class="text-primary font-bold flex items-center gap-2 text-lg">Listen Session <i data-lucide="radio" class="w-5 h-5"></i></span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Blog Content Modal -->
+    <div id="blogModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 sm:p-12 overflow-hidden">
+        <div class="absolute inset-0 modal-overlay" onclick="closeBlogModal()"></div>
+        <div class="modal-content relative animate-in fade-in zoom-in duration-500 shadow-2xl">
+            <button onclick="closeBlogModal()" class="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full transition-all">
+                <i data-lucide="x" class="w-10 h-10 text-gray-400"></i>
+            </button>
+            <div id="modalContent" class="max-w-3xl">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark-gray text-white pt-24 pb-12 px-6 sm:px-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-16 mb-24">
+                <div class="col-span-1 md:col-span-1">
+                     <div class="flex items-center gap-3 mb-10">
+                        <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                            <i data-lucide="graduation-cap" class="text-white w-6 h-6"></i>
+                        </div>
+                        <span class="text-3xl font-bold tracking-tighter">Learnova</span>
+                    </div>
+                    <p class="text-gray-400 text-lg leading-relaxed">Defining the next generation of education through asymmetrical design and user-centric ecosystems.</p>
+                </div>
+                <div>
+                    <h6 class="text-xs font-bold uppercase tracking-[0.3em] text-gray-500 mb-10">Resources</h6>
+                    <ul class="space-y-6 text-lg font-medium text-gray-400">
+                        <li><a href="index.html#learner" class="hover:text-white transition-all">Learning Hub</a></li>
+                        <li><a href="index.html#instructor" class="hover:text-white transition-all">Instructor Studio</a></li>
+                        <li><a href="blog.html" class="hover:text-white transition-all">Insights Hub</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h6 class="text-xs font-bold uppercase tracking-[0.3em] text-gray-500 mb-10">Support</h6>
+                    <ul class="space-y-6 text-lg font-medium text-gray-400">
+                        <li><a href="about.html" class="hover:text-white transition-all">About Us</a></li>
+                        <li><a href="privacy.html" class="hover:text-white transition-all">Privacy Guard</a></li>
+                        <li><a href="index.html#faq" class="hover:text-white transition-all">Help Center</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h6 class="text-xs font-bold uppercase tracking-[0.3em] text-gray-500 mb-10">Newsletter</h6>
+                    <p class="text-gray-400 mb-6 font-medium">Weekly insights into the future of learning.</p>
+                    <div class="relative">
+                        <input type="email" placeholder="hello@learnova.app" class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-primary transition-all">
+                        <button class="absolute right-2 top-2 p-2 bg-primary rounded-xl text-white">
+                             <i data-lucide="send" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-white/5 pt-12 flex flex-col md:flex-row justify-between items-center gap-8 text-sm">
+                <p class="text-gray-500 font-medium">© 2024 Learnova Platform. Built with Passion & Neural Logic.</p>
+                <div class="flex gap-6">
+                    <a href="#" class="text-gray-500 hover:text-white transition-all"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-all"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-all"><i data-lucide="github" class="w-5 h-5"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        const blogData = {
+            featured: {
+                title: "The Asymmetrical Learning Revolution: Beyond the Grid",
+                content: `
+                    <div class="space-y-10 text-2xl text-gray-500 font-medium leading-relaxed">
+                        <p>The traditional education system has long been structured like a grid—uniform, linear, and standardized for all learners. However, the asymmetrical learning revolution challenges this rigid framework by embracing flexibility, personalization, and nonlinear growth.</p>
+                        
+                        <div class="py-8 px-10 bg-blue-50/50 border-l-[10px] border-primary rounded-r-3xl">
+                            <p class="text-primary text-3xl font-bold italic font-sans leading-tight">"Break the grid, build your path."</p>
+                        </div>
+                        
+                        <p>In this evolving model, learning is no longer confined to classrooms, fixed curricula, or synchronized timelines. Instead, individuals progress based on their interests, strengths, and real-world demands, creating a more adaptive and meaningful educational journey.</p>
+                        
+                        <p>Asymmetrical learning recognizes that not all skills hold equal value at all times. Learners may dive deeply into one domain while maintaining a basic understanding of others, prioritizing relevance over uniformity. Digital platforms, open resources, and experiential opportunities enable this shift, allowing knowledge acquisition to happen anytime and anywhere. This approach fosters creativity, critical thinking, and self-direction—skills essential in a rapidly changing world.</p>
+                        
+                        <div class="py-8 px-10 bg-orange-50/50 border-l-[10px] border-accent-orange rounded-r-3xl">
+                            <p class="text-accent-orange text-3xl font-bold italic leading-tight">"Learn what matters, when it matters."</p>
+                        </div>
+                        
+                        <p>Ultimately, moving beyond the grid means redefining success in education. It is less about standardized outcomes and more about individual mastery and adaptability. The asymmetrical learning revolution empowers learners to design their own paths, making education a dynamic, lifelong process rather than a fixed destination.</p>
+                        
+                        <div class="py-8 px-10 bg-purple-50/50 border-l-[10px] border-accent-purple rounded-r-3xl">
+                            <p class="text-accent-purple text-3xl font-bold italic leading-tight">"Personalized learning, limitless growth."</p>
+                        </div>
+                    </div>
+                `
+            },
+            dashboard: {
+                title: "Mastering the Course Dashboard",
+                content: `
+                    <div class="space-y-10 text-2xl text-gray-500 font-medium leading-relaxed">
+                        <p>In today’s digital learning environment, an effective course dashboard is more than just a control panel—it’s the command center for scaling impact. A Kanban-style management system empowers instructors to visualize workflows, track student progress, and manage content with clarity. By organizing tasks into stages such as planning, active delivery, and completion, educators can quickly identify bottlenecks and optimize their teaching strategies. This structured yet flexible approach enhances productivity while maintaining a clear overview of the entire course lifecycle.</p>
+                        
+                        <div class="py-8 px-10 bg-blue-50/50 border-l-[10px] border-primary rounded-r-3xl">
+                            <p class="text-primary text-3xl font-bold italic leading-tight">"See the flow, control the outcome."</p>
+                        </div>
+                        
+                        <p>Data-driven decision-making lies at the heart of mastering the dashboard. Instructors can analyze engagement metrics, completion rates, and learner feedback to refine their content and delivery. The Kanban framework allows for real-time adjustments—moving tasks, updating priorities, and responding to student needs instantly. This adaptability ensures that courses remain relevant, efficient, and aligned with learning goals, ultimately improving both learner satisfaction and instructional effectiveness.</p>
+                        
+                        <div class="py-8 px-10 bg-orange-50/50 border-l-[10px] border-accent-orange rounded-r-3xl">
+                            <p class="text-accent-orange text-3xl font-bold italic leading-tight">"Turn insights into action."</p>
+                        </div>
+                        
+                        <p>Scaling reach becomes achievable when systems are both intuitive and strategic. By leveraging automation, organized workflows, and actionable data, instructors can manage larger audiences without compromising quality. The course dashboard transforms complexity into clarity, enabling educators to focus on what truly matters—delivering impactful learning experiences at scale.</p>
+                        
+                        <div class="py-8 px-10 bg-purple-50/50 border-l-[10px] border-accent-purple rounded-r-3xl">
+                            <p class="text-accent-purple text-3xl font-bold italic leading-tight">"Teach smarter, reach further."</p>
+                        </div>
+                    </div>
+                `
+            },
+            'ai-pathways': {
+                title: "AI-Pathways: The New Standard",
+                content: `
+                    <div class="space-y-10 text-2xl text-gray-500 font-medium leading-relaxed">
+                        <p>As education evolves, AI-driven pathways are redefining how learners engage with content and measure progress. Instead of static curricula, intelligent systems now adapt in real time—analyzing behavior, performance, and consistency to create personalized learning journeys. These AI-pathways ensure that each learner moves at an optimal pace, reinforcing strengths while addressing gaps. By integrating dynamic progression models, platforms can deliver a highly individualized experience that feels both intuitive and motivating.</p>
+                        
+                        <div class="py-8 px-10 bg-blue-50/50 border-l-[10px] border-primary rounded-r-3xl">
+                            <p class="text-primary text-3xl font-bold italic leading-tight">"Learning that adapts to you."</p>
+                        </div>
+                        
+                        <p>At the core of this system lies neural logic—algorithms designed to interpret patterns in learner activity. Personalized streaks are not just gamified elements; they are behavior-driven signals that encourage consistency and habit formation. Similarly, rank award systems are calibrated to reflect meaningful achievements rather than arbitrary milestones. This data-informed approach ensures that recognition aligns with real progress, making motivation both authentic and sustainable.</p>
+                        
+                        <div class="py-8 px-10 bg-orange-50/50 border-l-[10px] border-accent-orange rounded-r-3xl">
+                            <p class="text-accent-orange text-3xl font-bold italic leading-tight">"Consistency builds mastery."</p>
+                        </div>
+                        
+                        <p>Ultimately, AI-pathways establish a new standard for scalable, personalized education. By combining intelligent automation with human-centered design, these systems empower learners to stay engaged while giving educators deeper insights into performance trends. The result is a smarter ecosystem where progress is measurable, motivation is continuous, and learning becomes a seamless, evolving experience.</p>
+                        
+                        <div class="py-8 px-10 bg-purple-50/50 border-l-[10px] border-accent-purple rounded-r-3xl">
+                            <p class="text-accent-purple text-3xl font-bold italic leading-tight">"Smarter systems, stronger learners."</p>
+                        </div>
+                    </div>
+                `
+            },
+            podcast: {
+                title: "Voices from Learnova Studio",
+                content: `
+                    <div class="space-y-10 text-2xl text-gray-500 font-medium leading-relaxed">
+                        <p>In a rapidly evolving digital education landscape, the stories behind success matter as much as the outcomes. <i>Voices from Learnova Studio</i> brings forward in-depth conversations with the top 1% of instructors who have transformed their ideas into globally recognized educational brands. These interviews uncover the real journeys—early struggles, pivotal decisions, and the strategies that helped them break through the noise and build lasting impact across borders.</p>
+                        
+                        <div class="py-8 px-10 bg-blue-50/50 border-l-[10px] border-primary rounded-r-3xl">
+                            <p class="text-primary text-3xl font-bold italic leading-tight">"From zero to global impact."</p>
+                        </div>
+                        
+                        <p>What sets these educators apart is not just expertise, but their ability to scale with intention. They leverage digital platforms, community engagement, and data-driven insights to expand their reach without losing authenticity. Through these candid discussions, instructors share practical frameworks, growth tactics, and lessons learned—offering a roadmap for others aiming to grow their own educational ventures in a competitive space.</p>
+                        
+                        <div class="py-8 px-10 bg-orange-50/50 border-l-[10px] border-accent-orange rounded-r-3xl">
+                            <p class="text-accent-orange text-3xl font-bold italic leading-tight">"Learn from those who’ve done it."</p>
+                        </div>
+                        
+                        <p>Ultimately, this series is more than inspiration—it’s a blueprint for action. By learning directly from those who have achieved scale, aspiring educators can adopt proven approaches, avoid common pitfalls, and accelerate their own journeys. <i>Voices from Learnova Studio</i> turns experience into insight, and insight into opportunity for the next generation of global educators.</p>
+                        
+                        <div class="py-8 px-10 bg-purple-50/50 border-l-[10px] border-accent-purple rounded-r-3xl">
+                            <p class="text-accent-purple text-3xl font-bold italic leading-tight">"Your path starts with their stories."</p>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        function openBlogModal(id) {
+            const data = blogData[id];
+            if (!data) return;
+            
+            const contentDiv = document.getElementById('modalContent');
+            contentDiv.innerHTML = `
+                <span class="text-sm font-bold text-primary uppercase tracking-widest mb-6 block">${data.title}</span>
+                ${data.content}
+            `;
+            
+            document.getElementById('blogModal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            lucide.createIcons();
+        }
+
+        function closeBlogModal() {
+            document.getElementById('blogModal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        // Smooth scroll for internal anchors
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') {
+                    e.preventDefault();
+                    return;
+                }
+                if (targetId.startsWith('#')) {
+                    e.preventDefault();
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

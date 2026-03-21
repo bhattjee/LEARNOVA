@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Masterclass 2024 - Learnova</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1D4ED8',
+                        'dark-gray': '#464749',
+                        'light-gray': '#C5CAD3',
+                        'secondary-red': '#EF4444',
+                        'accent-orange': '#F5AA29',
+                        'accent-purple': '#7632EC',
+                        'accent-green': '#058E61',
+                    },
+                    fontFamily: {
+                        sans: ['Source Sans Pro', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .tab-btn.active {
+            color: #1D4ED8;
+            border-bottom: 2px solid #1D4ED8;
+        }
+        .lesson-item:hover {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-white text-dark-gray font-sans">
+
+    <!-- Navbar (Same as index) -->
+    <nav class="sticky top-0 z-50 bg-white border-b border-light-gray shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="graduation-cap" class="text-white w-5 h-5"></i>
+                </div>
+                <span class="text-2xl font-bold text-primary">Learnova</span>
+            </a>
+            <div class="hidden md:flex space-x-8">
+                <a href="index.html" class="text-sm font-medium text-primary">Courses</a>
+                <a href="blog.html" class="text-sm font-medium hover:text-primary transition-all">Blog</a>
+                <a href="about.html" class="text-sm font-medium hover:text-primary transition-all">About Us</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-primary text-xs font-bold border border-primary/20">JD</div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-10">
+        
+        <!-- Course Header -->
+        <div class="bg-gray-50 rounded-2xl overflow-hidden border border-light-gray mb-10">
+            <div class="flex flex-col md:flex-row">
+                <div class="md:w-1/3 h-64 md:h-auto overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=800&auto=format&fit=crop" class="w-full h-full object-cover">
+                </div>
+                <div class="md:w-2/3 p-8 flex flex-col justify-center">
+                    <div class="flex gap-2 mb-4">
+                        <span class="bg-blue-100 text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase">Programming</span>
+                        <span class="bg-green-100 text-accent-green text-[10px] font-bold px-2 py-0.5 rounded uppercase">Verified</span>
+                    </div>
+                    <h1 class="text-4xl font-bold mb-4">Python Masterclass 2024</h1>
+                    <p class="text-gray-500 mb-6 leading-relaxed">Master Python from scratch and master data visualization and machine learning algorithms. This comprehensive course covers everything from basics to advanced topics like AI and web scraping.</p>
+                    
+                    <div class="flex items-center gap-8 mb-8">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Students</p>
+                            <p class="font-bold">12,402 enrolled</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Rating</p>
+                            <div class="flex items-center gap-1 font-bold">
+                                <i data-lucide="star" class="w-4 h-4 text-accent-orange fill-accent-orange"></i> 4.8
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lessons</p>
+                            <p class="font-bold">24 Sessions</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <button class="bg-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-lg text-sm" onclick="window.location.href='player.html'">Continue Learning</button>
+                        <button class="p-3 border border-light-gray rounded-lg hover:bg-white transition-all text-gray-400"><i data-lucide="heart" class="w-5 h-5"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Progress (Sticky) -->
+        <div class="bg-white border-b border-light-gray mb-8 sticky top-16 z-20 transition-all">
+            <div class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex-1">
+                    <div class="flex justify-between text-xs font-bold uppercase tracking-widest mb-2 text-gray-400">
+                        <span>Course Completion</span>
+                        <span class="text-dark-gray">65% (15 / 24 Lessons)</span>
+                    </div>
+                    <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-accent-green w-[65%] shadow-[0_0_10px_rgba(5,142,97,0.3)]"></div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex border border-light-gray rounded-lg overflow-hidden">
+                        <button class="px-6 py-2 text-xs font-bold tab-btn active">Course Overview</button>
+                        <button class="px-6 py-2 text-xs font-bold tab-btn text-gray-400">Ratings & Reviews</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lessons Tab -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-2/3">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Course Curriculum</h2>
+                    <div class="relative w-64">
+                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                         <input type="text" placeholder="Search lesson..." class="w-full bg-gray-50 border border-light-gray rounded-lg pl-10 pr-4 py-2 text-xs focus:ring-2 focus:ring-primary outline-none transition-all">
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Lesson 1 (Completed) -->
+                    <div class="lesson-item flex items-center justify-between p-4 border border-light-gray rounded-xl cursor-pointer transition-all bg-gray-50/50" onclick="window.location.href='player.html'">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-accent-green border border-accent-green/20">
+                                <i data-lucide="check" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-dark-gray">01. Welcome to Python Masterclass</h4>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Video · 12 mins</p>
+                            </div>
+                        </div>
+                        <i data-lucide="play-circle" class="w-5 h-5 text-gray-300"></i>
+                    </div>
+
+                    <!-- Lesson 2 (Active/Current) -->
+                    <div class="lesson-item flex items-center justify-between p-4 border-2 border-primary rounded-xl cursor-pointer transition-all bg-blue-50/20" onclick="window.location.href='player.html'">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white shadow-md shadow-primary/30">
+                                <i data-lucide="play" class="w-5 h-5 fill-white"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-primary">02. Introduction to Python Syntax</h4>
+                                <p class="text-[10px] text-primary font-bold uppercase tracking-widest opacity-70">Video · 45 mins · CURRENT</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold text-primary animate-pulse">LEARNING</span>
+                    </div>
+
+                    <!-- Lesson 3 (Locked/Not started) -->
+                    <div class="lesson-item flex items-center justify-between p-4 border border-light-gray rounded-xl cursor-pointer transition-all opacity-60 hover:opacity-100" onclick="window.location.href='player.html'">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-gray-400 border border-gray-100">
+                                <i data-lucide="lock" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-600">03. Quiz: Syntax Fundamentals</h4>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Quiz · 15 Questions</p>
+                            </div>
+                        </div>
+                        <i data-lucide="help-circle" class="w-5 h-5 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:w-1/3">
+                <div class="bg-dark-gray text-white rounded-2xl p-8 sticky top-48">
+                    <h3 class="text-xl font-bold mb-4">Instructor</h3>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-14 h-14 rounded-xl border-2 border-primary overflow-hidden">
+                            <img src="https://i.pravatar.cc/150?u=instructor" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <p class="font-bold">Prof. Irshad Bhatt</p>
+                            <p class="text-xs text-blue-300">Data Science & AI Expert</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-300 leading-relaxed mb-6">Irshad has over 15 years of experience in AI research and software development. He has helped over 100k students master Python.</p>
+                    <button class="w-full py-3 border border-gray-600 rounded-lg text-sm font-bold hover:bg-gray-700 transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="message-square" class="w-4 h-4"></i> Contact Instructor
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer (Same as index) -->
+    <footer class="bg-dark-gray text-white py-16 mt-20">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+             <p class="text-gray-500 text-xs">© 2024 Learnova Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

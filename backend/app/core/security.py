@@ -6,13 +6,13 @@ All authentication logic flows through these helpers.
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import bcrypt
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+BCRYPT_ROUNDS = 12
 
 
 def create_access_token(
@@ -27,6 +27,7 @@ def create_access_token(
         else timedelta(minutes=settings.jwt_access_token_expire_minutes)
     )
     to_encode["exp"] = expire
+    to_encode["iat"] = datetime.now(timezone.utc)
     return jwt.encode(
         to_encode,
         settings.jwt_secret_key,
@@ -51,9 +52,16 @@ def verify_token(token: str) -> dict[str, Any]:
 
 def hash_password(plain: str) -> str:
     """Hash a plaintext password with bcrypt."""
-    return pwd_context.hash(plain)
+    salt = bcrypt.gensalt(rounds=BCRYPT_ROUNDS)
+    return bcrypt.hashpw(plain.encode("utf-8"), salt).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
     """Verify a plaintext password against a bcrypt hash."""
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(
+            plain.encode("utf-8"),
+            hashed.encode("utf-8"),
+        )
+    except ValueError:
+        return False

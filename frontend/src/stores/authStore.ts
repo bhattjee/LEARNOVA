@@ -1,66 +1,59 @@
 import { create } from "zustand";
-
-export type UserRole = "ADMIN" | "INSTRUCTOR" | "LEARNER";
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  role: UserRole;
-}
-
-const TOKEN_KEY = "learnova_access_token";
-const USER_KEY = "learnova_user";
-
-function readStoredUser(): AuthUser | null {
-  const raw = localStorage.getItem(USER_KEY);
-  if (!raw) {
-    return null;
-  }
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "id" in parsed &&
-      "email" in parsed &&
-      "role" in parsed
-    ) {
-      const u = parsed as Record<string, unknown>;
-      const role = u.role;
-      if (role === "ADMIN" || role === "INSTRUCTOR" || role === "LEARNER") {
-        return {
-          id: String(u.id),
-          email: String(u.email),
-          role,
-        };
-      }
-    }
-  } catch {
-    localStorage.removeItem(USER_KEY);
-  }
-  return null;
-}
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { UserPublic } from "@/types/auth.types";
 
 interface AuthState {
   token: string | null;
-  user: AuthUser | null;
-  setSession: (token: string, user: AuthUser) => void;
+  user: UserPublic | null;
+  isAuthenticated: boolean;
+  login: (token: string, user: UserPublic) => void;
   logout: () => void;
+  setUser: (user: UserPublic) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  token: localStorage.getItem(TOKEN_KEY),
-  user: readStoredUser(),
-  setSession: (token, user) => {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    set({ token, user });
-  },
-  logout: () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    set({ token: null, user: null });
-  },
-}));
+function redirectToLogin() {
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+    window.location.assign("/login");
+  }
+}
 
-export { TOKEN_KEY };
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      token: null,
+      user: null,
+      isAuthenticated: false,
+      login: (token, user) => {
+        set({ token, user, isAuthenticated: true });
+      },
+      logout: () => {
+        set({ token: null, user: null, isAuthenticated: false });
+        redirectToLogin();
+      },
+      setUser: (user) => {
+        set({ user });
+      },
+    }),
+    {
+      name: "learnova-auth",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        token: state.token,
+        user: state.user,
+      }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<Pick<AuthState, "token" | "user">>;
+        const token = p.token ?? null;
+        const user = p.user ?? null;
+        return {
+          ...current,
+          token,
+          user,
+          isAuthenticated: token !== null,
+        };
+      },
+    },
+  ),
+);
+
+export type { UserRole } from "@/types/auth.types";

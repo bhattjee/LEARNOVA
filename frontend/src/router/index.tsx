@@ -10,6 +10,7 @@ import { CourseFormPage } from "@/pages/admin/CourseFormPage";
 import { QuizBuilderPage } from "@/pages/admin/QuizBuilderPage";
 import { ReportingPage } from "@/pages/admin/ReportingPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { AdminLayout } from "@/components/common/AdminLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RoleRoute } from "./RoleRoute";
 
@@ -26,7 +27,7 @@ export function AppRouter() {
           path="/my-courses"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRoles={["LEARNER"]}>
+              <RoleRoute allowedRoles={["learner"]}>
                 <MyCoursesPage />
               </RoleRoute>
             </ProtectedRoute>
@@ -36,7 +37,7 @@ export function AppRouter() {
           path="/courses/:courseId/lessons/:lessonId"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRoles={["LEARNER"]}>
+              <RoleRoute allowedRoles={["learner"]}>
                 <LessonPlayerPage />
               </RoleRoute>
             </ProtectedRoute>
@@ -47,8 +48,10 @@ export function AppRouter() {
           path="/admin/dashboard"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
-                <DashboardPage />
+              <RoleRoute allowedRoles={["admin", "instructor"]}>
+                <AdminLayout title="Courses">
+                  <DashboardPage />
+                </AdminLayout>
               </RoleRoute>
             </ProtectedRoute>
           }
@@ -57,8 +60,10 @@ export function AppRouter() {
           path="/admin/courses/:id/edit"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
-                <CourseFormPage />
+              <RoleRoute allowedRoles={["admin", "instructor"]}>
+                <AdminLayout title="Edit course">
+                  <CourseFormPage />
+                </AdminLayout>
               </RoleRoute>
             </ProtectedRoute>
           }
@@ -67,8 +72,10 @@ export function AppRouter() {
           path="/admin/courses/:id/quiz/:quizId"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
-                <QuizBuilderPage />
+              <RoleRoute allowedRoles={["admin", "instructor"]}>
+                <AdminLayout title="Quiz builder">
+                  <QuizBuilderPage />
+                </AdminLayout>
               </RoleRoute>
             </ProtectedRoute>
           }
@@ -77,8 +84,10 @@ export function AppRouter() {
           path="/admin/reporting"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
-                <ReportingPage />
+              <RoleRoute allowedRoles={["admin", "instructor"]}>
+                <AdminLayout title="Reporting">
+                  <ReportingPage />
+                </AdminLayout>
               </RoleRoute>
             </ProtectedRoute>
           }

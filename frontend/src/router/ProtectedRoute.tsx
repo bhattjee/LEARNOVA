@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { TOKEN_KEY } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -8,7 +8,26 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = useAuthStore((s) => s.token);
+  const [hydrated, setHydrated] = useState(() => useAuthStore.persist.hasHydrated());
+
+  useEffect(() => {
+    if (hydrated) {
+      return;
+    }
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      setHydrated(true);
+    });
+    return unsub;
+  }, [hydrated]);
+
+  if (!hydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-brand-light-grey text-brand-dark-grey">
+        Loading…
+      </div>
+    );
+  }
 
   if (!token) {
     return <Navigate to="/login" replace state={{ from: location }} />;
