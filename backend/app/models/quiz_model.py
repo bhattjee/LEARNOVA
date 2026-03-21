@@ -1,0 +1,1 @@
+"""Placeholder: quiz_model."""

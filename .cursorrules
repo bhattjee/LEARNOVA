@@ -1,0 +1,316 @@
+# ============================================================
+# LEARNOVA — .cursorrules
+# ============================================================
+# This file is the single source of truth for Cursor AI.
+# Read this FULLY before touching any file in the project.
+# DO NOT modify this file unless explicitly told to do so.
+# ============================================================
+
+
+# ─────────────────────────────────────────────────────────────
+# 1. PROJECT IDENTITY
+# ─────────────────────────────────────────────────────────────
+PROJECT_NAME: Learnova
+TYPE: Web Application (responsive, not a native mobile app)
+DESCRIPTION: A dual-sided eLearning platform — Admin/Instructor backoffice and a Learner-facing website.
+LANGUAGE_FRONTEND: TypeScript (strict mode)
+LANGUAGE_BACKEND: Python 3.11+
+ARCHITECTURE: REST API (FastAPI) + SPA (React + Vite)
+
+
+# ─────────────────────────────────────────────────────────────
+# 2. DESIGN SYSTEM — COLOR PALETTE
+# ─────────────────────────────────────────────────────────────
+# Theme: Blue · Black · Grey · White (light mode ONLY — no dark mode)
+# All color values below are the ONLY allowed colors in the UI.
+# Never introduce new hex colors without updating this file.
+
+COLORS:
+  primary:         "#1D4ED8"    # Primary blue — CTAs, links, active states, nav highlights
+  primary_hover:   "#1E40AF"    # Darker blue — button hover, active
+  primary_light:   "#EFF6FF"    # Light blue tint — selected rows, info backgrounds
+  black:           "#0F172A"    # Near-black — headings, primary text
+  dark_grey:       "#464749"    # Dark grey — body text, icons, labels
+  mid_grey:        "#C5CAD3"    # Mid grey — borders, dividers, disabled states
+  light_grey:      "#F3F4F6"    # Light grey — page backgrounds, card backgrounds
+  white:           "#FFFFFF"    # Pure white — card surfaces, modal backgrounds
+  danger:          "#EF4444"    # Red — errors, delete actions, failed states
+  warning:         "#F5AA29"    # Amber — warnings, pending states
+  purple:          "#7632EC"    # Purple — badge highlights, gamification elements
+  success:         "#058E61"    # Green — success, completed states, publish badge
+
+TYPOGRAPHY:
+  font_family:     "Inter, system-ui, sans-serif"
+  font_heading:    "600 / 700 weight"
+  font_body:       "400 / 500 weight"
+  scale:
+    xs:   "12px"
+    sm:   "13px"
+    base: "14px"
+    md:   "16px"
+    lg:   "18px"
+    xl:   "20px"
+    2xl:  "24px"
+    3xl:  "30px"
+
+SPACING: Tailwind default scale (4px base unit)
+BORDER_RADIUS:
+  sm:   "6px"
+  md:   "8px"
+  lg:   "12px"
+  xl:   "16px"
+  full: "9999px"  # pills/badges
+
+
+# ─────────────────────────────────────────────────────────────
+# 3. COMPONENT DESIGN RULES
+# ─────────────────────────────────────────────────────────────
+
+BUTTONS:
+  primary:   bg=#1D4ED8, text=white, hover=bg=#1E40AF, rounded=8px
+  secondary: bg=white, border=1px #C5CAD3, text=#464749, hover=bg=#F3F4F6
+  danger:    bg=#EF4444, text=white, hover=bg=red-600
+  ghost:     bg=transparent, text=#1D4ED8, hover=bg=#EFF6FF
+  ALL buttons: min-height=36px, px=16px, font-weight=500
+
+INPUTS:
+  border: 1px solid #C5CAD3
+  focus:  border=#1D4ED8, ring=2px #EFF6FF
+  bg:     white
+  radius: 8px
+  height: 40px
+
+CARDS:
+  bg: white
+  border: 1px solid #C5CAD3
+  radius: 12px
+  shadow: 0 1px 3px rgba(0,0,0,0.08)
+  padding: 20px 24px
+
+BADGES:
+  published:  bg=#058E61, text=white, small pill
+  draft:      bg=#C5CAD3, text=#464749
+  completed:  bg=#058E61 (light variant), text=#058E61
+  in_progress: bg=#F5AA29 (light variant), text=#F5AA29
+  yet_to_start: bg=#C5CAD3, text=#464749
+
+NAVBAR (Admin):
+  bg: #0F172A (near-black)
+  text: white
+  active_item: left border 3px #1D4ED8, bg=#1D4ED8/10
+
+NAVBAR (Learner):
+  bg: white
+  border-bottom: 1px solid #C5CAD3
+  logo_color: #1D4ED8
+
+TABLES:
+  header: bg=#F3F4F6, text=#464749, font-weight=600
+  row: bg=white, border-bottom=1px #C5CAD3
+  row_hover: bg=#F3F4F6
+  striped: alternate #F9FAFB
+
+MODALS / DIALOGS:
+  overlay: rgba(0,0,0,0.5)
+  bg: white
+  radius: 16px
+  max-width: 640px (default), 800px (large)
+
+TABS:
+  active:   border-bottom=2px #1D4ED8, text=#1D4ED8, font-weight=600
+  inactive: text=#464749, hover=text=#0F172A
+
+PROGRESS BAR:
+  track: bg=#C5CAD3, radius=full
+  fill:  bg=#1D4ED8
+
+
+# ─────────────────────────────────────────────────────────────
+# 4. LAYOUT RULES
+# ─────────────────────────────────────────────────────────────
+
+ADMIN LAYOUT:
+  sidebar_width: 240px (fixed left)
+  content_area:  remaining width with padding 24px
+  topbar_height: 64px
+
+LEARNER LAYOUT:
+  max_content_width: 1200px, centered
+  padding: 0 24px (responsive: 0 16px on mobile)
+
+FULL_SCREEN_PLAYER:
+  sidebar_width: 320px (collapsible)
+  main_area: flex-1
+  bg: #0F172A (dark immersive feel for the player area only)
+  sidebar_bg: #1E293B
+
+RESPONSIVE BREAKPOINTS (Tailwind):
+  sm:  640px
+  md:  768px
+  lg:  1024px
+  xl:  1280px
+
+
+# ─────────────────────────────────────────────────────────────
+# 5. ROLES & ACCESS CONTROL
+# ─────────────────────────────────────────────────────────────
+
+ROLES:
+  - ADMIN       → Full backoffice access
+  - INSTRUCTOR  → Create/manage their own courses, view reporting
+  - LEARNER     → Browse/enroll/learn, take quizzes, earn points
+
+ROUTE GUARDS:
+  /admin/*     → requires ADMIN or INSTRUCTOR role
+  /courses/*   → public browse; enrollment/learning requires auth
+  /my-courses  → requires LEARNER auth
+
+JWT PAYLOAD: { user_id, email, role, exp }
+ROLE_CHECK: Always check role server-side on every protected endpoint.
+            Never trust role from client-side only.
+
+
+# ─────────────────────────────────────────────────────────────
+# 6. CORE FEATURES REFERENCE
+# ─────────────────────────────────────────────────────────────
+
+MODULE_A — ADMIN / INSTRUCTOR BACKOFFICE:
+  A1  Course Dashboard     → Kanban + List view, search, create modal
+  A2  Course Form          → Fields, tabs (Content/Description/Options/Quiz), publish toggle
+  A3  Content Management   → Lesson list with type icons, add/edit/delete
+  A4  Lesson Editor        → 3-tab popup: Content / Description / Attachments
+  A5  Course Options       → Visibility (Everyone/Signed In), Access (Open/Invitation/Payment)
+  A6  Quiz Tab             → Quiz list per course, CRUD
+  A7  Quiz Builder         → Question editor, correct option marking, attempt-based rewards
+  A8  Reporting            → Overview cards + filterable progress table + column toggle
+
+MODULE_B — LEARNER WEBSITE:
+  B1  Course Catalog       → Navbar Courses link, visibility-filtered list
+  B2  My Courses           → Course cards with state-based CTA + profile panel with badges
+  B3  Course Detail        → Overview tab: progress bar, lessons list with status icons
+  B4  Ratings & Reviews    → Star rating, reviews list, add review
+  B5  Full-Screen Player   → Sidebar (collapsible) + main viewer area
+  B6  Quiz Flow            → One question per page, proceed/complete, points on completion
+  B7  Points & Completion  → Points popup, badge progress, course completion button
+
+GAMIFICATION:
+  Badge levels based on TOTAL points:
+    Newbie:     0–19   pts
+    Explorer:   20–39  pts
+    Achiever:   40–59  pts
+    Specialist: 60–79  pts
+    Expert:     80–99  pts
+    Master:     100+   pts
+
+  Quiz attempt scoring:
+    Attempt 1 → full points (configured per quiz)
+    Attempt 2 → reduced (configured)
+    Attempt 3 → further reduced
+    Attempt 4+ → minimum points (configured)
+
+
+# ─────────────────────────────────────────────────────────────
+# 7. CODE QUALITY RULES
+# ─────────────────────────────────────────────────────────────
+
+GENERAL:
+  - Write clean, readable code — clarity > cleverness
+  - Follow SOLID principles and DRY methodology
+  - Max function length: 50 lines
+  - Max cyclomatic complexity: 10
+  - Max nesting depth: 3 levels
+  - Max function parameters: 4 (use object destructuring beyond this)
+  - Remove dead code immediately — never commit commented-out code
+  - Add TODO: comments with specific next steps when code is incomplete
+
+BACKEND (Python/FastAPI):
+  - ALL .py files MUST start with a top-of-file docstring:
+    """
+    <filename> — <one sentence description of what this file does>
+    """
+  - Use type hints on ALL function signatures
+  - Use Pydantic models for ALL request/response validation
+  - Use dependency injection for db sessions, current_user
+  - Return proper HTTP status codes (200, 201, 400, 401, 403, 404, 422, 500)
+  - Use HTTPException for all error responses
+  - Use async/await for all I/O-bound operations
+  - 4-space indentation
+
+FRONTEND (React/TypeScript):
+  - Functional components only — no class components
+  - One component per file
+  - All components must have TypeScript prop interfaces
+  - Use custom hooks for reusable logic
+  - Use TanStack Query for all API calls — no raw fetch in components
+  - Use Zustand for client-side ephemeral state only
+  - 2-space indentation
+  - Never use `any` type — use `unknown` with type guards
+  - All API calls go through src/services/ — never directly in components
+
+NAMING:
+  TypeScript: PascalCase components, camelCase variables, SCREAMING_SNAKE for constants
+  Python:     snake_case functions/variables, PascalCase classes, SCREAMING_SNAKE constants
+  API routes: kebab-case (/api/v1/my-courses)
+  DB tables:  plural snake_case (users, course_lessons, quiz_attempts)
+  DB columns: snake_case (created_at, is_published, total_points)
+
+
+# ─────────────────────────────────────────────────────────────
+# 8. API DESIGN RULES
+# ─────────────────────────────────────────────────────────────
+
+BASE_URL:       /api/v1/
+AUTH_HEADER:    Authorization: Bearer <JWT>
+PAGINATION:     ?page=1&limit=20
+ERROR_FORMAT:
+  {
+    "error": true,
+    "code": "COURSE_NOT_FOUND",
+    "message": "The requested course does not exist.",
+    "detail": null
+  }
+
+SUCCESS_FORMAT (list):
+  {
+    "data": [...],
+    "total": 100,
+    "page": 1,
+    "limit": 20
+  }
+
+SUCCESS_FORMAT (single):
+  {
+    "data": { ... }
+  }
+
+
+# ─────────────────────────────────────────────────────────────
+# 9. DATABASE RULES
+# ─────────────────────────────────────────────────────────────
+
+- Use UUID for all primary keys (public identifiers)
+- All tables MUST have: id (UUID), created_at, updated_at
+- Use soft deletes: deleted_at column (NULL = active, timestamp = deleted)
+- Use Alembic for ALL schema changes — never modify DB directly
+- Index: all foreign keys, frequently filtered columns (is_published, status, user_id)
+- Never store plain text passwords — use bcrypt
+- Transactions for any multi-step write operations
+
+
+# ─────────────────────────────────────────────────────────────
+# 10. WHAT CURSOR MUST NEVER DO
+# ─────────────────────────────────────────────────────────────
+
+- NEVER remove or break existing working code unless explicitly requested
+- NEVER modify business logic unless necessary for the current task
+- NEVER hardcode secrets, tokens, or passwords
+- NEVER use `any` in TypeScript
+- NEVER store files in the database — use file storage (local /uploads or R2)
+- NEVER commit .env files
+- NEVER skip error handling on async operations
+- NEVER expose stack traces in API error responses
+- NEVER skip input validation on backend endpoints
+- NEVER use string concatenation for SQL (always parameterized queries via SQLAlchemy)
+- NEVER introduce a new color not in the approved palette above
+- NEVER add dark mode styling (light mode only)
+- NEVER skip the top-of-file docstring in Python files

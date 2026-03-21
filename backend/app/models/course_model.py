@@ -1,0 +1,1 @@
+"""Placeholder: course_model."""

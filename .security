@@ -1,0 +1,2 @@
+# Local development security notes
+# Secrets belong in .env (never committed). Review OWASP basics for API auth.
