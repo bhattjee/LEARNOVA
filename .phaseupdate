@@ -1,2 +1,598 @@
-# Phase progress tracker
-# Update as milestones complete.
+# ============================================================
+# LEARNOVA — .phaseupdate
+# Phase-by-Phase Development Tracker
+# ============================================================
+# Update this file after completing each phase.
+# Format: mark [x] when done, fill in actual completion date,
+# and add any notes about deviations or issues encountered.
+# ============================================================
+
+LAST_UPDATED: 2026-03-21
+CURRENT_PHASE: 0
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 0 — Project Setup & Foundation
+# ─────────────────────────────────────────────────────────────
+STATUS: [x] Complete (verify PostgreSQL credentials + `alembic upgrade head` locally)
+COMPLETED_DATE: 2026-03-21
+
+WHAT THIS PHASE DOES:
+  Bootstraps the entire monorepo. Creates both the React frontend (Vite)
+  and FastAPI backend from scratch, installs all dependencies, configures
+  Tailwind + shadcn/ui, sets up PostgreSQL connection via SQLAlchemy,
+  creates the base Alembic migration scaffold, and establishes environment
+  variable handling. Also creates the health-check endpoint, the base
+  Axios client with JWT interceptor, and the root routing structure.
+
+HOW IT WORKS IN THE SYSTEM:
+  - Frontend runs at http://localhost:5173
+  - Backend runs at http://localhost:8000
+  - Backend connects to local PostgreSQL (learnova database)
+  - GET /api/v1/health returns { "status": "ok" } — verifies the stack is alive
+  - CORS is configured to allow frontend to call backend
+  - The Tailwind config imports custom color tokens matching the palette
+
+DELIVERABLES:
+  [x] frontend/ folder with Vite + React + TypeScript
+  [x] Tailwind + shadcn/ui installed and configured
+  [x] Color tokens configured in tailwind.config.ts
+  [x] backend/ folder with FastAPI + SQLAlchemy + Alembic
+  [ ] PostgreSQL connection working (learnova database exists) — set `DATABASE_URL` / password in `backend/.env`
+  [ ] /api/v1/health endpoint responding — requires working DB (returns 503 if DB down)
+  [x] Both .env.example files created
+  [x] Base Axios client in src/services/apiClient.ts
+
+ISSUES / DEVIATIONS:
+  — `asyncpg` added alongside pinned `psycopg2-binary` so `AsyncEngine` works; Alembic uses sync `postgresql://` via env conversion.
+  — Initial migration added manually (`a1b2c3d4e5f6_initial_empty.py`); re-run `alembic revision --autogenerate` after Phase 1 models if desired.
+  — `components.json` + `src/lib/utils.ts` scaffold shadcn-style setup; run `npx shadcn@latest add …` to pull full UI primitives when needed.
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 1 — Authentication & User Management
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Implements full auth: registration, login, JWT issuance, and a
+  protected /me endpoint. Creates the users table in PostgreSQL.
+  On the frontend: Login page, Register page, protected route wrapper,
+  role-based route guard, and the global auth Zustand store.
+
+HOW IT WORKS IN THE SYSTEM:
+  - POST /api/v1/auth/register → creates user, returns JWT
+  - POST /api/v1/auth/login    → validates credentials, returns JWT
+  - GET  /api/v1/auth/me       → returns current user profile (requires token)
+  - JWT is stored in localStorage (local dev)
+  - Axios interceptor attaches Bearer token to every request
+  - ProtectedRoute redirects to /login if no valid token
+  - RoleRoute shows 403 if user role is not allowed
+  - 3 seed users created: admin@learnova.com / instructor@learnova.com / learner@learnova.com
+
+DATABASE TABLES CREATED:
+  users (id UUID PK, email, password_hash, full_name, role, avatar_url,
+         total_points, created_at, updated_at, deleted_at)
+
+DELIVERABLES:
+  [ ] users table migration (Alembic)
+  [ ] /api/v1/auth/register, /login, /me endpoints
+  [ ] Login page UI (email + password)
+  [ ] Register page UI (name + email + password + role selector)
+  [ ] Zustand authStore (user, token, login(), logout(), isAuthenticated)
+  [ ] ProtectedRoute component
+  [ ] RoleRoute component
+  [ ] Seed script for 3 test users
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 2 — Admin Course Dashboard (Kanban + List)
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Builds the instructor/admin course dashboard — the first page after login
+  for admin/instructor roles. Displays all courses in either Kanban or List
+  view. Includes search, a + button to create a new course via a small modal,
+  and action menus (Edit / Share) on each course card.
+
+HOW IT WORKS IN THE SYSTEM:
+  - GET /api/v1/courses returns all courses for the authenticated instructor
+  - Kanban view groups courses into columns (Draft / Published)
+  - List view shows courses in a table
+  - Create course modal: enter title → POST /api/v1/courses → redirect to edit form
+  - Share: copies the learner-facing course URL to clipboard
+  - Published badge shows if course is live on website
+
+DATABASE TABLES CREATED:
+  courses (id UUID PK, title, slug, tags[], cover_image_url, is_published,
+           website, visibility, access_rule, price_cents, responsible_user_id,
+           views_count, total_duration_seconds, created_by UUID FK,
+           created_at, updated_at, deleted_at)
+
+DELIVERABLES:
+  [ ] courses table migration
+  [ ] GET /api/v1/courses endpoint (with pagination + search)
+  [ ] POST /api/v1/courses endpoint (create)
+  [ ] Course Dashboard page with Kanban/List toggle
+  [ ] CourseCard component (Kanban)
+  [ ] CourseListRow component (Table)
+  [ ] CreateCourseModal component
+  [ ] SearchBar integration
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 3 — Course Form & Tabs Layout
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Builds the full course edit page (/admin/courses/:id/edit). Implements
+  the 4-tab layout (Content / Description / Options / Quiz), the publish
+  toggle, course image upload, and all core course fields. The Content,
+  Options, and Quiz tabs are shells at this stage — filled in Phases 4, 5, 6.
+
+HOW IT WORKS IN THE SYSTEM:
+  - GET  /api/v1/courses/:id returns course detail
+  - PUT  /api/v1/courses/:id updates course fields
+  - PATCH /api/v1/courses/:id/publish toggles is_published
+  - Header: Publish toggle, Preview button, Add Attendees, Contact Attendees
+  - Tabs persist active state in URL query param (?tab=content)
+  - Auto-save on blur for text fields (optional) or Save button
+
+DELIVERABLES:
+  [ ] GET/PUT /api/v1/courses/:id endpoints
+  [ ] PATCH /api/v1/courses/:id/publish endpoint
+  [ ] CourseFormPage layout
+  [ ] 4-tab navigation
+  [ ] Course fields form (title, tags, website, responsible)
+  [ ] Cover image upload placeholder
+  [ ] Publish toggle component
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 4 — Content Management (Lessons)
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Implements the Content tab inside the course form. Instructors can see
+  a list of all lessons, add new ones via a 3-tab popup editor, edit or
+  delete existing lessons. Supports three lesson types: Video, Document, Image.
+
+HOW IT WORKS IN THE SYSTEM:
+  - GET    /api/v1/courses/:id/lessons → list lessons
+  - POST   /api/v1/lessons → create lesson
+  - PUT    /api/v1/lessons/:id → update lesson
+  - DELETE /api/v1/lessons/:id → soft delete
+  - Video type: stores YouTube/Drive URL + duration
+  - Document type: stores file reference + allow_download flag
+  - Image type: stores file reference + allow_download flag
+  - Lesson editor popup has 3 tabs: Content / Description / Attachments
+
+DATABASE TABLES CREATED:
+  lessons (id, course_id FK, title, type ENUM, video_url, file_url, duration_seconds,
+           allow_download, description, sort_order, responsible_user_id,
+           created_at, updated_at, deleted_at)
+  lesson_attachments (id, lesson_id FK, type ENUM[file|link], url, label,
+                      created_at)
+
+DELIVERABLES:
+  [ ] lessons + lesson_attachments migrations
+  [ ] CRUD endpoints for lessons and attachments
+  [ ] LessonList component (Content tab)
+  [ ] LessonEditorModal (3-tab popup)
+  [ ] VideoLessonForm / DocumentLessonForm / ImageLessonForm
+  [ ] Delete confirmation dialog
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 5 — Quiz Builder (Instructor)
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Builds the Quiz tab and the full quiz builder page. Instructors create
+  quizzes, add questions with multiple options, mark correct answers, and
+  configure attempt-based point rewards.
+
+HOW IT WORKS IN THE SYSTEM:
+  - Quizzes are linked to a course (course_id)
+  - Each quiz has: title, questions[], reward_config (4 attempt tiers)
+  - Each question has: text, options[], correct_option_ids[]
+  - Reward config: { attempt_1_pts, attempt_2_pts, attempt_3_pts, attempt_4plus_pts }
+  - Quiz builder is a full page (not a modal) for sufficient space
+  - Left panel: question list + Add Question + Rewards buttons
+  - Right panel: question editor
+
+DATABASE TABLES CREATED:
+  quizzes (id, course_id FK, title, attempt_1_points, attempt_2_points,
+           attempt_3_points, attempt_4plus_points, created_at, updated_at)
+  questions (id, quiz_id FK, text, sort_order, created_at, updated_at)
+  question_options (id, question_id FK, text, is_correct, sort_order)
+
+DELIVERABLES:
+  [ ] quizzes, questions, question_options migrations
+  [ ] CRUD endpoints for quizzes and questions
+  [ ] QuizList component (Quiz tab in course form)
+  [ ] QuizBuilderPage (full page editor)
+  [ ] QuestionEditor component
+  [ ] RewardsConfig component
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 6 — Course Options, Attendees & Publishing
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Fills in the Options tab (visibility + access rules), and implements the
+  Add Attendees and Contact Attendees wizards. Connects the publish toggle
+  to the actual backend logic.
+
+HOW IT WORKS IN THE SYSTEM:
+  - Options tab: visibility (Everyone/Signed In), access (Open/Invitation/Payment)
+  - When access=Payment: price field appears
+  - Add Attendees wizard: enter email(s) → creates enrollment records → sends invite email
+  - Contact Attendees wizard: compose subject + body → sends to all enrolled learners
+  - Only published + visibility=Everyone courses appear on public catalog
+  - Visibility=SignedIn: only logged-in learners see it
+  - Access=Invitation: only enrolled learners can start the course
+
+DATABASE TABLES CREATED:
+  enrollments (id, user_id FK, course_id FK, enrolled_at, enrolled_by UUID FK,
+               created_at)
+
+DELIVERABLES:
+  [ ] enrollments table migration
+  [ ] Course options save to DB
+  [ ] POST /api/v1/courses/:id/enroll (add attendee)
+  [ ] POST /api/v1/courses/:id/contact-attendees
+  [ ] AddAttendeesWizard component
+  [ ] ContactAttendeesWizard component
+  [ ] Options tab form (visibility + access + price)
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 7 — Reporting Dashboard
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Builds the full reporting dashboard for admin/instructor. Shows overview
+  stat cards (Total/Yet to Start/In Progress/Completed) and a detailed
+  per-learner progress table. Cards filter the table. Columns are toggleable.
+
+HOW IT WORKS IN THE SYSTEM:
+  - GET /api/v1/reporting?status=all|not_started|in_progress|completed
+  - Returns aggregated stats + paginated learner rows
+  - Each row: course name, participant, enrolled date, start date, time spent,
+    completion %, completed date, status
+  - Clicking a stat card sets a filter that re-queries the table
+  - Column visibility saved to localStorage per user
+
+DELIVERABLES:
+  [ ] GET /api/v1/reporting endpoint (with status filter)
+  [ ] ReportingPage layout
+  [ ] ReportingOverviewCards component
+  [ ] ReportingTable component (with sort + filter)
+  [ ] ColumnTogglePanel (slide-in panel with checkboxes)
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 8 — Learner Course Catalog & My Courses
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Builds the learner-facing public website: the main navbar with a Courses
+  link, the course catalog (all published courses filtered by visibility),
+  and the My Courses dashboard with profile panel and badge display.
+
+HOW IT WORKS IN THE SYSTEM:
+  - GET /api/v1/courses/public → returns published courses respecting visibility rules
+  - Course card CTA changes: Join Course (guest) / Start / Continue / Buy Course
+  - My Courses: GET /api/v1/my-courses → learner's enrolled courses with progress
+  - Profile panel: total points, current badge, progress to next badge
+  - Search courses by name (client-side filter or API query param)
+
+DELIVERABLES:
+  [ ] GET /api/v1/courses/public + /api/v1/my-courses endpoints
+  [ ] Learner Navbar component
+  [ ] CourseCatalogPage
+  [ ] MyCoursesPage
+  [ ] Learner CourseCard component (with state-based CTA)
+  [ ] ProfilePanel component
+  [ ] BadgeDisplay component
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 9 — Course Detail Page
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  The learner's course detail page with two tabs: Course Overview and
+  Ratings & Reviews. Overview shows progress bar, lesson list with status
+  icons (in progress, completed), and a search by lesson name. Clicking a
+  lesson opens the full-screen player.
+
+HOW IT WORKS IN THE SYSTEM:
+  - GET /api/v1/courses/:id/detail → course info + learner's lesson progress
+  - Progress bar: completed_lessons / total_lessons * 100
+  - Lessons: blue tick = completed, animated icon = in progress, empty = not started
+  - Lesson search filters the list client-side
+
+DATABASE TABLES CREATED:
+  lesson_progress (id, user_id FK, lesson_id FK, course_id FK,
+                   status ENUM[not_started|in_progress|completed],
+                   completed_at, time_spent_seconds, created_at, updated_at)
+
+DELIVERABLES:
+  [ ] lesson_progress migration
+  [ ] GET /api/v1/courses/:id/detail endpoint
+  [ ] CourseDetailPage with tabs
+  [ ] Progress bar component
+  [ ] Lesson list with status icons
+  [ ] Lesson search
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 10 — Full-Screen Lesson Player
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  The immersive full-screen lesson player. Dark sidebar on left showing
+  course title, progress %, and lesson list with status icons and attachments.
+  Main area shows the lesson content (video/document/image). Back and Next
+  Content buttons navigate between lessons. Marking a lesson complete on
+  transition.
+
+HOW IT WORKS IN THE SYSTEM:
+  - Page: /courses/:courseId/lessons/:lessonId
+  - On entering a lesson: POST /api/v1/progress/start (marks in_progress)
+  - On clicking Next Content: POST /api/v1/progress/complete (marks completed)
+  - Sidebar is collapsible via toggle icon
+  - Video: React Player (YouTube/Drive embed)
+  - Document: PDF viewer (iframe or react-pdf)
+  - Image: full-size image display
+  - Attachments shown under lesson name in sidebar
+  - Next Content moves to next lesson in sort_order
+
+DELIVERABLES:
+  [ ] POST /api/v1/progress/start and /complete endpoints
+  [ ] LessonPlayerPage (full-screen layout)
+  [ ] PlayerSidebar (collapsible)
+  [ ] VideoPlayer component
+  [ ] DocumentViewer component
+  [ ] ImageViewer component
+  [ ] Back / Next Content navigation
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 11 — Quiz — Learner Side
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Quiz experience inside the full-screen player. Intro screen → one question
+  per page → proceed → final question shows Complete Quiz button. On completion,
+  awards points based on attempt number and the quiz's reward config.
+
+HOW IT WORKS IN THE SYSTEM:
+  - GET /api/v1/quizzes/:id/intro → shows question count, attempt history
+  - POST /api/v1/quizzes/:id/start → creates a new attempt record
+  - POST /api/v1/quizzes/:id/submit → submits answers, returns score + points awarded
+  - Points = reward_config[attempt_number] (capped at attempt_4plus after 4th try)
+  - Zustand quizStore: stores current question index, selected options
+  - On completion: quiz marked completed in sidebar (tick), points popup shown
+
+DATABASE TABLES CREATED:
+  quiz_attempts (id, user_id FK, quiz_id FK, attempt_number, score_percentage,
+                 points_awarded, started_at, completed_at)
+  quiz_answers (id, attempt_id FK, question_id FK, selected_option_ids[],
+                is_correct)
+
+DELIVERABLES:
+  [ ] quiz_attempts + quiz_answers migrations
+  [ ] GET /api/v1/quizzes/:id/intro
+  [ ] POST /api/v1/quizzes/:id/start
+  [ ] POST /api/v1/quizzes/:id/submit
+  [ ] QuizIntroScreen component
+  [ ] QuizQuestionPage component (one per page)
+  [ ] Zustand quizStore with localStorage persist
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 12 — Points, Badges & Course Completion
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Points popup after quiz completion, badge level calculation and display,
+  and the course completion flow (Complete this Course button + marking done).
+
+HOW IT WORKS IN THE SYSTEM:
+  - After quiz submit: response includes { points_awarded, total_points, new_badge? }
+  - Points popup shows: "You earned X points" + progress ring to next badge
+  - Badge levels: Newbie(0) Explorer(20) Achiever(40) Specialist(60) Expert(80) Master(100+)
+  - Course completion: when all lessons are completed, show "Complete this Course" button
+  - POST /api/v1/courses/:id/complete → marks course as completed, updates enrollments
+  - User's total_points updated in DB after each quiz
+
+DATABASE CHANGES:
+  enrollments: add status ENUM[enrolled|in_progress|completed], completed_at, start_date
+
+DELIVERABLES:
+  [ ] Badge calculation utility function
+  [ ] POST /api/v1/courses/:id/complete endpoint
+  [ ] Total points update on quiz completion
+  [ ] PointsPopup component (animated)
+  [ ] BadgeDisplay in profile panel (with correct current badge)
+  [ ] Course completion button in player
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 13 — Ratings & Reviews
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  The Ratings & Reviews tab on the Course Detail Page. Shows average star
+  rating, list of reviews with avatars, and a modal to add a new review.
+
+HOW IT WORKS IN THE SYSTEM:
+  - GET  /api/v1/courses/:id/reviews → list of reviews + average rating
+  - POST /api/v1/courses/:id/reviews → create review (auth required)
+  - Only enrolled users can leave a review
+  - One review per user per course
+  - Star rating: 1–5 stars + optional text comment
+
+DATABASE TABLES CREATED:
+  reviews (id, user_id FK, course_id FK, rating INT 1-5, comment TEXT,
+           created_at, updated_at)
+
+DELIVERABLES:
+  [ ] reviews migration
+  [ ] GET/POST /api/v1/courses/:id/reviews endpoints
+  [ ] ReviewsList component
+  [ ] StarRating component (interactive + display)
+  [ ] AddReviewModal component
+  [ ] Average rating calculation + display
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 14 — File Uploads & Storage
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Wires up actual file upload for: course cover images, document lessons,
+  image lessons, and lesson attachments. Uses local /uploads folder for
+  development (configured via STORAGE_TYPE=local in .env).
+
+HOW IT WORKS IN THE SYSTEM:
+  - POST /api/v1/uploads → receives multipart file, validates, saves, returns URL
+  - Files saved as: /uploads/<uuid>.<ext>
+  - GET /api/v1/uploads/:filename → serves file (with auth check for protected files)
+  - Frontend useFileUpload hook handles upload progress state
+  - Document viewer: embed PDF in iframe using the served URL
+  - Image viewer: display image from served URL
+
+DELIVERABLES:
+  [ ] POST /api/v1/uploads endpoint (multipart, validation, uuid rename)
+  [ ] GET /api/v1/uploads/:filename endpoint
+  [ ] useFileUpload hook with progress state
+  [ ] File upload UI in LessonEditorModal (drag-drop or click)
+  [ ] Course cover image upload in CourseFormPage
+  [ ] DocumentViewer wired to actual uploaded PDF
+  [ ] See docs/r2-storage-setup.md for production R2 switch
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 15 — Email Integration (Attendees)
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Wires up Resend email sending for Add Attendees (invitation email) and
+  Contact Attendees (bulk email to enrolled learners).
+
+HOW IT WORKS IN THE SYSTEM:
+  - Add Attendees: sends "You've been invited to <Course>" email with login link
+  - Contact Attendees: sends instructor's custom subject+body to all enrollees
+  - Email is sent via Resend API (RESEND_API_KEY in .env)
+  - See docs/resend-email-setup.md for Resend account + API key setup
+  - Emails are non-blocking: sent in FastAPI BackgroundTasks
+
+DELIVERABLES:
+  [ ] email_service.py with Resend integration
+  [ ] invite_attendee_email template (HTML)
+  [ ] contact_attendees_email template (HTML)
+  [ ] Wire to /enroll and /contact-attendees endpoints
+  [ ] See docs/resend-email-setup.md
+
+ISSUES / DEVIATIONS:
+  —
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 16 — Final Polish & Testing
+# ─────────────────────────────────────────────────────────────
+STATUS: [ ] Pending
+COMPLETED_DATE: —
+
+WHAT THIS PHASE DOES:
+  Final responsive QA, loading + empty states, error states, toast
+  notifications, micro-animations, and core test suite.
+
+DELIVERABLES:
+  [ ] Responsive layout verified on 375px, 768px, 1280px
+  [ ] Loading skeletons on all data-fetching pages
+  [ ] Empty states for: no courses, no lessons, no reviews
+  [ ] Toast notifications for: save, delete, publish, quiz complete
+  [ ] Form validation error messages on all forms
+  [ ] 404 page
+  [ ] Backend: pytest tests for auth, course CRUD, quiz scoring
+  [ ] Frontend: basic smoke tests for critical flows
+
+ISSUES / DEVIATIONS:
+  —

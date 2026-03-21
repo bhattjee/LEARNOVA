@@ -1,18 +1,31 @@
-"""Alembic environment (wire to app metadata when models exist)."""
+"""
+env.py — Alembic environment. Uses a synchronous PostgreSQL URL derived from
+`DATABASE_URL` (asyncpg DSN) and `Base.metadata` for autogenerate.
+"""
+
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import create_engine, pool
+
+from app.core.config import settings
+from app.core.database import Base
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = None
+target_metadata = Base.metadata
+
+
+def _sync_database_url(url: str) -> str:
+    if url.startswith("postgresql+asyncpg://"):
+        return "postgresql://" + url.removeprefix("postgresql+asyncpg://")
+    return url
 
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    url = _sync_database_url(settings.database_url)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -24,9 +37,8 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_engine(
+        _sync_database_url(settings.database_url),
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:

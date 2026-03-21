@@ -1,2 +1,194 @@
-# Local development security notes
-# Secrets belong in .env (never committed). Review OWASP basics for API auth.
+# ============================================================
+# LEARNOVA — .security
+# Security configuration for LOCAL DEVELOPMENT
+# ============================================================
+# This file documents all security decisions and configurations.
+# Review this before adding any new endpoint or feature.
+# ============================================================
+
+
+# ─────────────────────────────────────────────────────────────
+# 1. ENVIRONMENT
+# ─────────────────────────────────────────────────────────────
+
+ENVIRONMENT: local
+FRONTEND_URL: http://localhost:5173
+BACKEND_URL:  http://localhost:8000
+DATABASE_URL: postgresql://postgres:<password>@localhost:5432/learnova
+FILE_STORAGE: local (/backend/uploads/) — switch to Cloudflare R2 for production
+
+
+# ─────────────────────────────────────────────────────────────
+# 2. AUTHENTICATION & AUTHORIZATION
+# ─────────────────────────────────────────────────────────────
+
+JWT:
+  algorithm:          HS256
+  access_token_ttl:   60 minutes (local dev — shorten to 15min in prod)
+  secret_key:         stored in .env as JWT_SECRET_KEY (min 32 chars, random)
+  payload:            { sub: user_id (UUID), email, role, exp, iat }
+  storage (frontend): httpOnly cookie preferred; localStorage allowed for local dev only
+  header:             Authorization: Bearer <token>
+
+PASSWORD_HASHING:
+  library:  bcrypt (passlib[bcrypt])
+  rounds:   12
+  NEVER:    store plain text, MD5, SHA1, or unsalted hashes
+
+ROLE_ENFORCEMENT:
+  Every protected endpoint MUST use FastAPI dependency: get_current_user(token)
+  Role check MUST happen in the service layer, not just the router
+  Pattern:
+    router:  Depends(get_current_user) — authenticates
+    service: if user.role not in allowed_roles: raise HTTPException(403)
+
+
+# ─────────────────────────────────────────────────────────────
+# 3. CORS (Local Development)
+# ─────────────────────────────────────────────────────────────
+
+ALLOWED_ORIGINS:
+  - http://localhost:5173    # Vite dev server
+  - http://localhost:3000    # Alternate port
+  - http://127.0.0.1:5173
+  - http://127.0.0.1:3000
+
+ALLOWED_METHODS:  GET, POST, PUT, PATCH, DELETE, OPTIONS
+ALLOWED_HEADERS:  Content-Type, Authorization, X-Request-ID
+ALLOW_CREDENTIALS: true
+MAX_AGE:          600 seconds
+
+NOTE: In production, restrict origins to the actual deployed frontend domain only.
+
+
+# ─────────────────────────────────────────────────────────────
+# 4. INPUT VALIDATION
+# ─────────────────────────────────────────────────────────────
+
+ALL API inputs MUST be validated via Pydantic schemas before reaching the service layer.
+
+STRING FIELDS:
+  - Trim whitespace before saving
+  - max_length enforced at schema level
+  - Reject empty strings where field is required
+
+FILE UPLOADS:
+  - Allowed extensions: .pdf, .doc, .docx, .ppt, .pptx, .png, .jpg, .jpeg, .gif, .mp4
+  - Max file size: 50MB (configured in FastAPI via File size limit middleware)
+  - Validate MIME type (not just extension)
+  - Save to /backend/uploads/<uuid>.<ext> — never use original filename directly
+  - Serve files via /api/v1/uploads/<uuid> endpoint with auth check
+
+SQL INJECTION:
+  - ONLY use SQLAlchemy ORM or parameterized text() queries
+  - NEVER concatenate user input into SQL strings
+
+XSS:
+  - All user-generated content (course descriptions, reviews) must be sanitized
+  - Use bleach library on backend before saving HTML content
+  - Frontend: use React's default JSX rendering (no dangerouslySetInnerHTML)
+
+
+# ─────────────────────────────────────────────────────────────
+# 5. RATE LIMITING (Local Development)
+# ─────────────────────────────────────────────────────────────
+
+Library: slowapi (FastAPI rate limiter)
+
+Limits (local dev — relaxed):
+  /api/v1/auth/login:     10 requests / minute per IP
+  /api/v1/auth/register:  5 requests / minute per IP
+  all other endpoints:    200 requests / minute per IP (generous for dev)
+
+Response on limit exceeded: HTTP 429 with Retry-After header
+
+
+# ─────────────────────────────────────────────────────────────
+# 6. ENVIRONMENT VARIABLES
+# ─────────────────────────────────────────────────────────────
+
+REQUIRED (backend/.env):
+  DATABASE_URL=postgresql://postgres:<password>@localhost:5432/learnova
+  JWT_SECRET_KEY=<minimum-32-char-random-string>
+  JWT_ALGORITHM=HS256
+  JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+  UPLOAD_DIR=./uploads
+  MAX_UPLOAD_SIZE_MB=50
+  ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+  # EMAIL (Phase 15 — skip until then):
+  RESEND_API_KEY=<your-resend-api-key>
+  EMAIL_FROM=noreply@learnova.local
+  # FILE STORAGE (Phase 14 — local first):
+  STORAGE_TYPE=local    # set to "r2" when switching to Cloudflare R2
+  R2_ACCOUNT_ID=
+  R2_ACCESS_KEY_ID=
+  R2_SECRET_ACCESS_KEY=
+  R2_BUCKET_NAME=
+
+REQUIRED (frontend/.env):
+  VITE_API_BASE_URL=http://localhost:8000
+  VITE_APP_NAME=Learnova
+
+RULES:
+  - .env files are in .gitignore — NEVER commit them
+  - Use .env.example with placeholder values as documentation
+  - Validate ALL required env vars at application startup
+  - FastAPI: use pydantic BaseSettings in core/config.py
+  - Fail immediately if critical vars are missing
+
+
+# ─────────────────────────────────────────────────────────────
+# 7. ERROR HANDLING & LOGGING
+# ─────────────────────────────────────────────────────────────
+
+BACKEND:
+  - NEVER return stack traces, file paths, or internal details in API responses
+  - Log full errors server-side (console in dev, structured JSON in prod)
+  - Use custom exception handlers for HTTPException
+  - Generic 500 response: { "error": true, "code": "INTERNAL_ERROR", "message": "An unexpected error occurred." }
+  - Log format: timestamp | level | request_id | user_id | method | path | status | duration
+
+FRONTEND:
+  - Use React ErrorBoundary for unexpected component crashes
+  - TanStack Query onError callbacks for API failure handling
+  - Never log auth tokens or passwords to browser console
+  - Show user-friendly messages, never raw API error details
+
+
+# ─────────────────────────────────────────────────────────────
+# 8. SESSION & COOKIE SECURITY (Local Dev)
+# ─────────────────────────────────────────────────────────────
+
+For local development, JWT stored in localStorage is acceptable.
+For production, switch to:
+  - httpOnly: true
+  - secure: true (HTTPS only)
+  - sameSite: Lax
+  - path: /
+  - maxAge: 3600 (1 hour)
+
+
+# ─────────────────────────────────────────────────────────────
+# 9. SENSITIVE DATA RULES
+# ─────────────────────────────────────────────────────────────
+
+NEVER return password hashes in any API response
+NEVER log: passwords, tokens, full credit card numbers
+Mask emails in logs: j***@example.com
+Course price is stored as integer cents (e.g., 1000 = ₹10.00 or $10.00)
+User PII fields: email, full_name — minimize exposure in list endpoints
+
+
+# ─────────────────────────────────────────────────────────────
+# 10. SECURITY CHECKLIST (run before each phase completion)
+# ─────────────────────────────────────────────────────────────
+
+[ ] All new endpoints have authentication dependency
+[ ] All new endpoints have role check in service layer
+[ ] All new Pydantic schemas have field validators
+[ ] No secrets hardcoded in any file
+[ ] File upload validation implemented (type + size)
+[ ] No raw SQL string concatenation
+[ ] Error responses don't expose internal details
+[ ] No console.log of sensitive data in frontend
+[ ] .env files not staged in git (git status check)
