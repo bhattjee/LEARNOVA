@@ -1,9 +1,11 @@
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
-sqlalchemy[asyncio]==2.0.30
+# 2.0.30 breaks on Python 3.13 (__firstlineno__); use a release that includes the TypingOnly fix.
+sqlalchemy[asyncio]==2.0.38
 alembic==1.13.1
-psycopg2-binary==2.9.9
-asyncpg==0.29.0
+# Use versions with prebuilt wheels for Python 3.13 on Windows (no MSVC required).
+psycopg2-binary==2.9.11
+asyncpg==0.31.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.9

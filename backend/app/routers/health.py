@@ -12,6 +12,12 @@ from app.core.database import get_db
 router = APIRouter(tags=["health"])
 
 
+@router.get("/health/live")
+def health_live() -> dict[str, str]:
+    """Liveness: process is up (no database). Use when debugging 503 on /health."""
+    return {"status": "ok", "service": "learnova-api"}
+
+
 @router.get("/health")
 async def health_check(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """Return API status and verify database connectivity."""
