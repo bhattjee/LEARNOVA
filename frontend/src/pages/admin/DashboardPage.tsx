@@ -3,7 +3,6 @@ import {
   Clock,
   LayoutGrid,
   List,
-  Loader2,
   MoreHorizontal,
   Plus,
   Search,
@@ -24,6 +23,7 @@ import { useGetCourses } from "@/hooks/useCourses";
 import { formatDuration } from "@/lib/formatDuration";
 import type { CourseListItem, KanbanColumn } from "@/types/course.types";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 function splitKanban(courses: CourseListItem[]): { draft: KanbanColumn; published: KanbanColumn } {
   const draftCourses = courses.filter((c) => !c.is_published);
@@ -156,9 +156,31 @@ export function DashboardPage() {
         ) : null}
 
         {isLoading ? (
-          <div className="flex min-h-[240px] items-center justify-center text-brand-dark-grey">
-            <Loader2 className="h-8 w-8 animate-spin" aria-label="Loading" />
-          </div>
+          view === "kanban" ? (
+            <div className="grid gap-6 lg:grid-cols-2">
+              {[1, 2].map((id) => (
+                <div key={id} className="rounded-xl border border-brand-mid-grey bg-white p-4">
+                  <Skeleton className="h-6 w-24 mb-4" />
+                  <div className="flex flex-col gap-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="rounded-lg border border-brand-mid-grey p-4">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="mt-2 h-4 w-1/2" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-brand-mid-grey bg-white">
+              <div className="p-4 space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            </div>
+          )
         ) : view === "kanban" ? (
           <div className="grid gap-6 lg:grid-cols-2">
             {[columns.draft, columns.published].map((col) => (
@@ -171,7 +193,20 @@ export function DashboardPage() {
                 </div>
                 <div className="flex flex-col gap-4">
                   {col.courses.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-brand-dark-grey">No courses</p>
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-mid-grey/10 text-brand-dark-grey/40">
+                        <Plus className="h-6 w-6" />
+                      </div>
+                      <p className="text-sm font-medium text-brand-black">No {col.label.toLowerCase()} courses</p>
+                      {col.id === "draft" && search === "" && (
+                        <button
+                          onClick={() => setModalOpen(true)}
+                          className="mt-2 text-xs font-semibold text-primary hover:underline"
+                        >
+                          Create your first course
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     col.courses.map((c) => <CourseCard key={c.id} course={c} />)
                   )}
@@ -196,8 +231,16 @@ export function DashboardPage() {
               <tbody>
                 {(data?.data ?? []).length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center text-brand-dark-grey">
-                      No courses yet
+                    <td colSpan={7} className="px-4 py-16 text-center">
+                      <div className="flex flex-col items-center">
+                        <p className="text-sm font-medium text-brand-black">No courses found</p>
+                        <button
+                          onClick={() => setModalOpen(true)}
+                          className="mt-2 text-xs font-semibold text-primary hover:underline"
+                        >
+                          Add your first course to get started
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (

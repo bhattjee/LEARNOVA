@@ -17,6 +17,7 @@ from app.models import (  # noqa: F401 — ORM metadata
     lesson_model,
     lesson_progress_model,
     quiz_model,
+    review_model,
     user_model,
 )
 

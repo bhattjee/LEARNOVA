@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 import * as authService from "@/services/authService";
 import type { UserRole } from "@/types/auth.types";
@@ -47,6 +48,7 @@ export function RegisterPage(_props: RegisterPageProps) {
         role,
       });
       loginStore(res.access_token, res.user);
+      toast.success("Account created successfully! Welcome to Learnova.");
       navigate(roleHome(res.user.role), { replace: true });
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === "object") {

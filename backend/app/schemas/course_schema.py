@@ -114,6 +114,56 @@ class LearnerCoursesListResponse(BaseModel):
     data: list[LearnerCourseItem]
 
 
+LessonRowStatus = Literal["not_started", "in_progress", "completed"]
+LessonRowType = Literal["video", "document", "image", "quiz"]
+
+
+class LessonProgressItem(BaseModel):
+    lesson_id: UUID
+    title: str
+    type: LessonRowType
+    status: LessonRowStatus
+    sort_order: int
+    has_attachments: bool
+    duration_seconds: int = Field(
+        0,
+        description="Lesson duration for display in the outline.",
+    )
+
+
+class CourseDetailForLearner(BaseModel):
+    id: UUID
+    title: str
+    slug: str
+    description: str | None
+    cover_image_url: str | None
+    tags: list[str]
+    visibility: CourseVisibility
+    access_rule: CourseAccessRule
+    price_cents: int | None
+    average_rating: float | None = None
+    total_duration_seconds: int
+    total_lessons: int
+    completed_count: int
+    incomplete_count: int
+    completion_percentage: float
+    lessons: list[LessonProgressItem]
+    enrollment_status: LearnerCourseStatus | None = None
+
+
+class CourseDetailForLearnerEnvelope(BaseModel):
+    data: CourseDetailForLearner
+
+
+class CompleteCourseResult(BaseModel):
+    completed: bool
+    completion_date: datetime
+
+
+class CompleteCourseEnvelope(BaseModel):
+    data: CompleteCourseResult
+
+
 class UpdateCourseRequest(BaseModel):
     title: Annotated[str | None, Field(None, min_length=1, max_length=500)] = None
     tags: list[str] | None = None

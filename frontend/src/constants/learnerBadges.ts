@@ -1,35 +1,41 @@
+import { BADGE_LEVELS, getBadgeForPoints, getNextBadge } from "@/utils/badgeUtils";
+
 export interface LearnerBadgeLevel {
   id: string;
   name: string;
   thresholdPoints: number;
 }
 
-/** Gamification ladder (UI-only until backend badge API exists). */
-export const LEARNER_BADGE_LEVELS: LearnerBadgeLevel[] = [
-  { id: "starter", name: "Starter", thresholdPoints: 0 },
-  { id: "explorer", name: "Explorer", thresholdPoints: 50 },
-  { id: "achiever", name: "Achiever", thresholdPoints: 200 },
-  { id: "scholar", name: "Scholar", thresholdPoints: 500 },
-  { id: "master", name: "Master", thresholdPoints: 1000 },
-];
+/** Ladder aligned with `badgeUtils.BADGE_LEVELS` for profile UI. */
+export const LEARNER_BADGE_LEVELS: LearnerBadgeLevel[] = BADGE_LEVELS.map((b) => ({
+  id: b.name.toLowerCase(),
+  name: b.name,
+  thresholdPoints: b.min_points,
+}));
 
 export function learnerBadgeState(points: number) {
   const sorted = [...LEARNER_BADGE_LEVELS].sort((a, b) => a.thresholdPoints - b.thresholdPoints);
-  let currentIdx = 0;
-  for (let i = 0; i < sorted.length; i += 1) {
-    if (points >= sorted[i].thresholdPoints) {
-      currentIdx = i;
-    }
-  }
-  const current = sorted[currentIdx];
-  const next = sorted[currentIdx + 1] ?? null;
+  const current = getBadgeForPoints(points);
+  const currentIdx = sorted.findIndex((l) => l.name === current.name);
+  const safeIdx = currentIdx >= 0 ? currentIdx : 0;
+  const nextInfo = getNextBadge(points);
+  const next = nextInfo
+    ? sorted.find((l) => l.name === nextInfo.badge.name) ?? null
+    : null;
+  const pointsToNext = nextInfo?.pointsNeeded ?? 0;
   const progressToNext =
-    next === null
+    !nextInfo || !next
       ? 1
       : Math.min(
           1,
-          (points - current.thresholdPoints) / (next.thresholdPoints - current.thresholdPoints),
+          (points - current.min_points) / (next.thresholdPoints - current.min_points),
         );
-  const pointsToNext = next === null ? 0 : Math.max(0, next.thresholdPoints - points);
-  return { sorted, current, next, currentIdx, progressToNext, pointsToNext };
+  return {
+    sorted,
+    current: sorted[safeIdx] ?? sorted[0],
+    next,
+    currentIdx: safeIdx,
+    progressToNext,
+    pointsToNext,
+  };
 }

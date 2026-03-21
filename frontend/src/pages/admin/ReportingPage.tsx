@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Columns2, Loader2, Users, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Columns2, Users, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { formatDurationShort } from "@/lib/formatDuration";
 import { cn } from "@/lib/utils";
 import { useReporting } from "@/hooks/useReporting";
@@ -98,7 +99,7 @@ export function ReportingPage() {
   }, [page, totalPages]);
 
   function setCol(key: ToggleableKey, visible: boolean) {
-    setCols((prev) => {
+    setCols((prev: ColumnVisibility) => {
       const next = { ...prev, [key]: visible };
       saveColumnVisibility(next);
       return next;
@@ -121,8 +122,22 @@ export function ReportingPage() {
 
   if (isLoading && !data) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center text-brand-dark-grey">
-        <Loader2 className="h-10 w-10 animate-spin" aria-hidden />
+      <div className="space-y-6 pb-10">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-lg border border-brand-mid-grey bg-white p-5 shadow-sm">
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ))}
+        </div>
+        <div className="overflow-x-auto rounded-xl border border-brand-mid-grey bg-white shadow-sm">
+           <div className="p-4 space-y-4">
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+           </div>
+        </div>
       </div>
     );
   }
@@ -306,7 +321,7 @@ export function ReportingPage() {
             <button
               type="button"
               disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((p: number) => Math.max(1, p - 1))}
               className="inline-flex items-center gap-1 rounded-md border border-brand-mid-grey bg-white px-3 py-1.5 font-medium hover:bg-brand-light-grey disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -318,7 +333,7 @@ export function ReportingPage() {
             <button
               type="button"
               disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => setPage((p: number) => p + 1)}
               className="inline-flex items-center gap-1 rounded-md border border-brand-mid-grey bg-white px-3 py-1.5 font-medium hover:bg-brand-light-grey disabled:opacity-40"
             >
               Next

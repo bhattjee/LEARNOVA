@@ -4,9 +4,9 @@ A quiz belongs to a course and has configurable per-attempt point rewards.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import ARRAY, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -93,3 +93,72 @@ class QuestionOption(Base, TimestampMixin):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     question: Mapped["Question"] = relationship("Question", back_populates="options")
+
+
+class QuizAttempt(Base, TimestampMixin):
+    __tablename__ = "quiz_attempts"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    quiz_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("quizzes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    score_percentage: Mapped[float | None] = mapped_column(Float, nullable=True)
+    points_awarded: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    answers: Mapped[list["QuizAnswer"]] = relationship(
+        "QuizAnswer",
+        back_populates="attempt",
+        cascade="all, delete-orphan",
+    )
+
+
+class QuizAnswer(Base, TimestampMixin):
+    __tablename__ = "quiz_answers"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    attempt_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("quiz_attempts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    question_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("questions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    selected_option_ids: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(UUID(as_uuid=True)),
+        nullable=False,
+    )
+    is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    attempt: Mapped["QuizAttempt"] = relationship("QuizAttempt", back_populates="answers")

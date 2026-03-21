@@ -71,6 +71,7 @@ export interface UpdateCourseRequest {
   access_rule?: CourseAccessRule;
   price_cents?: number | null;
   description?: string | null;
+  cover_image_url?: string | null;
 }
 
 export interface UpdateCourseOptionsRequest {
@@ -78,6 +79,7 @@ export interface UpdateCourseOptionsRequest {
   access_rule?: CourseAccessRule;
   price_cents?: number | null;
   responsible_user_id?: string | null;
+  cover_image_url?: string | null;
 }
 
 export interface AddAttendeesResponse {
@@ -127,4 +129,42 @@ export interface LearnerCourseItem extends Omit<PublicCourseItem, "learner_statu
 
 export interface LearnerCoursesListResponse {
   data: LearnerCourseItem[];
+}
+
+export type LessonRowStatus = "not_started" | "in_progress" | "completed";
+
+export type LessonRowType = "video" | "document" | "image" | "quiz";
+
+export interface LessonProgressOutlineItem {
+  lesson_id: string;
+  title: string;
+  type: LessonRowType;
+  status: LessonRowStatus;
+  sort_order: number;
+  has_attachments: boolean;
+  duration_seconds: number;
+}
+
+export interface CourseDetailForLearner {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  cover_image_url: string | null;
+  tags: string[];
+  visibility: CourseVisibility;
+  access_rule: CourseAccessRule;
+  price_cents: number | null;
+  average_rating: number | null;
+  total_duration_seconds: number;
+  total_lessons: number;
+  completed_count: number;
+  incomplete_count: number;
+  completion_percentage: number;
+  lessons: LessonProgressOutlineItem[];
+  enrollment_status: LearnerCourseStatus | null;
+}
+
+export interface CourseDetailForLearnerEnvelope {
+  data: CourseDetailForLearner;
 }

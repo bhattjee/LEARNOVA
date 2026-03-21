@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
-  Camera,
   Check,
   Loader2,
   Mail,
@@ -16,6 +15,7 @@ import { LessonList } from "@/components/admin/lessons/LessonList";
 import { PublishToggle } from "@/components/admin/courses/PublishToggle";
 import { QuizTab } from "@/components/admin/quiz/QuizTab";
 import { TagInput } from "@/components/admin/courses/TagInput";
+import { FileUploadZone } from "@/components/common/FileUploadZone";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCourse, useStaffUsers, useUpdateCourse } from "@/hooks/useCourses";
 import { cn } from "@/lib/utils";
@@ -120,6 +120,7 @@ export function CourseFormPage() {
     }
     try {
       await updateMutation.mutateAsync({ description: d.trim() || null });
+      toast.success("Description updated successfully!");
       flashSaved();
     } catch {
       toast.error("Could not save description.");
@@ -213,22 +214,15 @@ export function CourseFormPage() {
         </div>
       </header>
 
-      <div
-        className="flex h-[200px] cursor-pointer items-center justify-center border-b border-dashed border-brand-mid-grey bg-brand-light-grey px-6"
-        role="button"
-        tabIndex={0}
-        onClick={() => toast.message("Image upload is available in Phase 14.")}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toast.message("Image upload is available in Phase 14.");
-          }
-        }}
-      >
-        <div className="flex flex-col items-center gap-2 text-brand-dark-grey">
-          <Camera className="h-10 w-10 opacity-60" />
-          <span className="text-sm">Click to upload cover (Phase 14)</span>
-        </div>
+      <div className="border-b border-brand-mid-grey bg-brand-light-grey px-6 py-4">
+        <FileUploadZone
+          label="Course Cover Image"
+          allowedTypes="image"
+          currentUrl={course.cover_image_url}
+          onUpload={(url) => void saveField({ cover_image_url: url })}
+          onRemove={() => void saveField({ cover_image_url: null })}
+          className="max-w-[800px] mx-auto"
+        />
       </div>
 
       <div className="space-y-6 px-6 pb-10 pt-6">

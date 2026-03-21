@@ -31,6 +31,7 @@ export function CreateCourseModal({ open, onOpenChange }: CreateCourseModalProps
     if (!t) return;
     try {
       const course = await createMutation.mutateAsync({ title: t });
+      toast.success("Course created successfully!");
       reset();
       onOpenChange(false);
       navigate(`/admin/courses/${course.id}/edit`, { replace: true });

@@ -6,7 +6,7 @@ Learner-facing catalog routes are separate.
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -15,10 +15,12 @@ from app.models.user_model import User, UserRole
 from app.schemas.course_schema import (
     AddAttendeesRequest,
     AddAttendeesResponse,
+    CompleteCourseEnvelope,
     ContactAttendeesRequest,
     ContactAttendeesResponse,
     CourseAttendeesResponse,
     CourseDetailEnvelope,
+    CourseDetailForLearnerEnvelope,
     CourseItemEnvelope,
     CourseListResponse,
     CreateCourseRequest,
@@ -28,10 +30,12 @@ from app.schemas.course_schema import (
 )
 from app.services.course_service import (
     add_attendees,
+    complete_course_for_learner,
     contact_attendees,
     create_course,
     get_course_attendees,
     get_course_by_id,
+    get_course_detail_for_learner,
     get_courses,
     get_public_courses,
     soft_delete_course,
@@ -45,6 +49,7 @@ router = APIRouter()
 StaffUser = Annotated[User, Depends(require_roles(UserRole.ADMIN, UserRole.INSTRUCTOR))]
 AdminUser = Annotated[User, Depends(require_roles(UserRole.ADMIN))]
 OptionalUser = Annotated[User | None, Depends(get_optional_user)]
+LearnerUser = Annotated[User, Depends(require_roles(UserRole.LEARNER))]
 
 
 @router.get("/public", response_model=PublicCoursesListResponse)
@@ -116,8 +121,9 @@ async def add_course_attendees_route(
     current_user: StaffUser,
     db: Annotated[AsyncSession, Depends(get_db)],
     body: AddAttendeesRequest,
+    background_tasks: BackgroundTasks,
 ) -> AddAttendeesResponse:
-    return await add_attendees(db, course_id, current_user, body.emails)
+    return await add_attendees(db, course_id, current_user, body.emails, background_tasks)
 
 
 @router.post("/{course_id}/contact", response_model=ContactAttendeesResponse)
@@ -126,6 +132,7 @@ async def contact_course_attendees_route(
     current_user: StaffUser,
     db: Annotated[AsyncSession, Depends(get_db)],
     body: ContactAttendeesRequest,
+    background_tasks: BackgroundTasks,
 ) -> ContactAttendeesResponse:
     return await contact_attendees(
         db,
@@ -133,7 +140,28 @@ async def contact_course_attendees_route(
         current_user,
         body.subject.strip(),
         body.body.strip(),
+        background_tasks,
     )
+
+
+@router.get("/{course_id}/learner-detail", response_model=CourseDetailForLearnerEnvelope)
+async def get_course_learner_detail_route(
+    course_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: OptionalUser,
+) -> CourseDetailForLearnerEnvelope:
+    detail = await get_course_detail_for_learner(db, course_id, current_user)
+    return CourseDetailForLearnerEnvelope(data=detail)
+
+
+@router.post("/{course_id}/complete", response_model=CompleteCourseEnvelope)
+async def complete_course_route(
+    course_id: UUID,
+    current_user: LearnerUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> CompleteCourseEnvelope:
+    result = await complete_course_for_learner(db, course_id, current_user)
+    return CompleteCourseEnvelope(data=result)
 
 
 @router.get("/{course_id}", response_model=CourseDetailEnvelope)

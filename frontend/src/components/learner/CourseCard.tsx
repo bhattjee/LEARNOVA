@@ -1,6 +1,7 @@
 import { Clock, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { resolveLearnerCourseCta } from "@/lib/learnerCourseCta";
 import type { LearnerCourseItem, PublicCourseItem } from "@/types/course.types";
 
 function formatDuration(totalSeconds: number): string {
@@ -14,11 +15,6 @@ function formatDuration(totalSeconds: number): string {
   const h = Math.floor(m / 60);
   const rm = m % 60;
   return rm > 0 ? `${h}h ${rm}m` : `${h}h`;
-}
-
-function formatInr(priceCents: number): string {
-  const rupees = priceCents / 100;
-  return rupees % 1 === 0 ? String(Math.round(rupees)) : rupees.toFixed(2);
 }
 
 export interface LearnerCourseCardProps {
@@ -35,67 +31,12 @@ export function LearnerCourseCard({ course, isAuthenticated }: LearnerCourseCard
       ? Math.min(100, Math.max(0, course.completion_percentage))
       : null;
 
-  type Cta =
-    | { kind: "link"; to: string; label: string; className: string }
-    | { kind: "button"; label: string; className: string; disabled?: boolean };
-
-  let cta: Cta;
-  if (!isAuthenticated) {
-    cta = {
-      kind: "link",
-      to: "/login",
-      label: "Join Course",
-      className:
-        "flex h-10 w-full items-center justify-center rounded-md bg-primary text-sm font-medium text-white hover:bg-primary-hover",
-    };
-  } else if (!status || status === "not_enrolled") {
-    if (course.access_rule === "on_invitation") {
-      cta = {
-        kind: "button",
-        label: "By Invitation Only",
-        className:
-          "flex h-10 w-full cursor-not-allowed items-center justify-center rounded-md bg-brand-light-grey text-sm font-medium text-brand-dark-grey",
-        disabled: true,
-      };
-    } else if (course.access_rule === "on_payment") {
-      const price = course.price_cents != null ? formatInr(course.price_cents) : "—";
-      cta = {
-        kind: "button",
-        label: `Buy Course — ₹${price}`,
-        className:
-          "flex h-10 w-full items-center justify-center rounded-md bg-status-warning text-sm font-medium text-white hover:opacity-95",
-      };
-    } else {
-      cta = {
-        kind: "button",
-        label: "Start Learning",
-        className:
-          "flex h-10 w-full items-center justify-center rounded-md bg-primary text-sm font-medium text-white hover:bg-primary-hover",
-      };
-    }
-  } else if (status === "enrolled") {
-    cta = {
-      kind: "button",
-      label: "Start",
-      className:
-        "flex h-10 w-full items-center justify-center rounded-md bg-primary text-sm font-medium text-white hover:bg-primary-hover",
-    };
-  } else if (status === "in_progress") {
-    cta = {
-      kind: "button",
-      label: "Continue",
-      className:
-        "flex h-10 w-full items-center justify-center rounded-md border-2 border-primary bg-white text-sm font-medium text-primary hover:bg-primary-light",
-    };
-  } else {
-    cta = {
-      kind: "button",
-      label: "Completed ✓",
-      className:
-        "flex h-10 w-full cursor-not-allowed items-center justify-center rounded-md border border-status-success/40 bg-[#ECFDF5] text-sm font-medium text-status-success",
-      disabled: true,
-    };
-  }
+  const cta = resolveLearnerCourseCta({
+    isAuthenticated,
+    learnerStatus: status,
+    accessRule: course.access_rule,
+    priceCents: course.price_cents,
+  });
 
   function runCta() {
     if (cta.kind === "link") {
@@ -173,11 +114,11 @@ export function LearnerCourseCard({ course, isAuthenticated }: LearnerCourseCard
 
         <div className="mt-4 mt-auto pt-1">
           {cta.kind === "link" ? (
-            <Link to={cta.to} className={cta.className}>
+            <Link to={cta.to} className={cn(cta.className, "w-full")}>
               {cta.label}
             </Link>
           ) : (
-            <button type="button" className={cta.className} disabled={cta.disabled} onClick={runCta}>
+            <button type="button" className={cn(cta.className, "w-full")} disabled={cta.disabled} onClick={runCta}>
               {cta.label}
             </button>
           )}

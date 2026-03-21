@@ -17,3 +17,60 @@
     @apply text-brand-black;
   }
 }
+
+@keyframes points-popup-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.points-popup-enter {
+  animation: points-popup-enter 0.3s ease-out forwards;
+}
+
+@keyframes trophy-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.trophy-pulse {
+  animation: trophy-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-celebrate {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.badge-celebrate {
+  animation: badge-celebrate 0.45s ease-out forwards;
+}
+
+@keyframes cap-spin {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(12deg);
+  }
+}
+
+.course-complete-cap {
+  animation: cap-spin 1.2s ease-in-out infinite alternate;
+}

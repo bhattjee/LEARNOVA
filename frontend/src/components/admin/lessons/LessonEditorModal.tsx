@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { FileText, Image as ImageIcon, Link2, Loader2, PlayCircle, Trash2, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { FileText, Image as ImageIcon, Link2, Loader2, PlayCircle, Trash2 } from "lucide-react";
+import { FileUploadZone } from "@/components/common/FileUploadZone";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLesson, useLessonMutations } from "@/hooks/useLessons";
@@ -15,8 +16,8 @@ interface LessonEditorModalProps {
   lessonId: string | null;
 }
 
-interface PendingLink {
-  type: "link";
+interface PendingAttachment {
+  type: AttachmentType;
   url: string;
   label: string;
 }
@@ -35,10 +36,14 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
   const [allowDownload, setAllowDownload] = useState(false);
   const [description, setDescription] = useState("");
   const [responsibleId, setResponsibleId] = useState("");
-  const [pendingLinks, setPendingLinks] = useState<PendingLink[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const [linkLabel, setLinkLabel] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const titleRef = useRef<HTMLInputElement>(null);
+  const videoUrlRef = useRef<HTMLInputElement>(null);
+  const durationRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +56,7 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
       setAllowDownload(false);
       setDescription("");
       setResponsibleId("");
-      setPendingLinks([]);
+      setPendingAttachments([]);
       setLinkLabel("");
       setLinkUrl("");
     }
@@ -67,7 +72,7 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
     setAllowDownload(lessonDetail.allow_download);
     setDescription(lessonDetail.description ?? "");
     setResponsibleId(lessonDetail.responsible_user?.id ?? "");
-    setPendingLinks([]);
+    setPendingAttachments([]);
     setLinkLabel("");
     setLinkUrl("");
   }, [open, isEdit, lessonId, lessonDetail]);
@@ -87,20 +92,39 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
         setLinkUrl("");
       });
     } else {
-      setPendingLinks((p) => [...p, { type: "link", url, label }]);
+      setPendingAttachments((p: PendingAttachment[]) => [...p, { type: "link", url, label }]);
       setLinkLabel("");
       setLinkUrl("");
     }
   }
 
   function removePending(i: number) {
-    setPendingLinks((p) => p.filter((_, idx) => idx !== i));
+    setPendingAttachments((p: PendingAttachment[]) => p.filter((_, idx: number) => idx !== i));
   }
 
   async function handleSave() {
     const t = title.trim();
     if (!t) {
       toast.error("Title is required.");
+      titleRef.current?.focus();
+      return;
+    }
+
+    if (type === "video") {
+      if (!videoUrl.trim()) {
+        toast.error("Video URL is required for video lessons.");
+        videoUrlRef.current?.focus();
+        return;
+      }
+      if (!durationHHMM.match(/^\d+:[0-5]\d$/)) {
+        toast.error("Duration must be in H:MM format (e.g. 0:45).");
+        durationRef.current?.focus();
+        return;
+      }
+    }
+
+    if ((type === "document" || type === "image") && !fileUrl.trim()) {
+      toast.error(`${type.charAt(0).toUpperCase() + type.slice(1)} file is required.`);
       return;
     }
     const duration_seconds = parseDurationToSeconds(durationHHMM);
@@ -134,10 +158,10 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
           description: payload.description,
           responsible_user_id: payload.responsible_user_id,
         });
-        for (const pl of pendingLinks) {
+        for (const pl of pendingAttachments) {
           await addAtt.mutateAsync({
             lessonId: created.id,
-            body: { type: "link", url: pl.url, label: pl.label },
+            body: { type: pl.type, url: pl.url, label: pl.label },
           });
         }
         toast.success("Lesson saved");
@@ -201,11 +225,12 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
                   <div>
                     <label className="mb-1 block text-sm font-medium text-brand-black">Lesson Title</label>
                     <input
+                      ref={titleRef}
                       type="text"
                       required
                       maxLength={500}
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                       className="h-10 w-full rounded-md border border-brand-mid-grey px-3 text-sm outline-none ring-primary-light focus:border-primary focus:ring-2"
                     />
                   </div>
@@ -265,6 +290,7 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-brand-black">Video Link</label>
                       <input
+                        ref={videoUrlRef}
                         type="url"
                         placeholder="YouTube or Google Drive link"
                         value={videoUrl}
@@ -279,6 +305,7 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
                           Duration (H:MM hours)
                         </label>
                         <input
+                          ref={durationRef}
                           type="text"
                           placeholder="0:45"
                           value={durationHHMM}
@@ -291,14 +318,13 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
 
                   {type === "document" ? (
                     <div className="space-y-3">
-                      <button
-                        type="button"
-                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-brand-mid-grey px-4 text-sm font-medium text-brand-dark-grey hover:bg-brand-light-grey"
-                        onClick={() => toast.message("File upload is available in Phase 14.")}
-                      >
-                        <Upload className="h-4 w-4" />
-                        Upload document
-                      </button>
+                      <FileUploadZone
+                        label="Upload Document (PDF, DOCX, etc.)"
+                        allowedTypes="document"
+                        currentUrl={fileUrl}
+                        onUpload={setFileUrl}
+                        onRemove={() => setFileUrl("")}
+                      />
                       <label className="flex items-center gap-2 text-sm text-brand-dark-grey">
                         <input
                           type="checkbox"
@@ -313,14 +339,13 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
 
                   {type === "image" ? (
                     <div className="space-y-3">
-                      <button
-                        type="button"
-                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-brand-mid-grey px-4 text-sm font-medium text-brand-dark-grey hover:bg-brand-light-grey"
-                        onClick={() => toast.message("Image upload is available in Phase 14.")}
-                      >
-                        <Upload className="h-4 w-4" />
-                        Upload image
-                      </button>
+                      <FileUploadZone
+                        label="Upload Lesson Image"
+                        allowedTypes="image"
+                        currentUrl={fileUrl}
+                        onUpload={setFileUrl}
+                        onRemove={() => setFileUrl("")}
+                      />
                       <label className="flex items-center gap-2 text-sm text-brand-dark-grey">
                         <input
                           type="checkbox"
@@ -378,13 +403,17 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
                       </li>
                     ))}
                     {!isEdit
-                      ? pendingLinks.map((p, i) => (
+                      ? pendingAttachments.map((p: PendingAttachment, i: number) => (
                           <li
                             key={`${p.url}-${i}`}
                             className="flex items-center justify-between rounded-md border border-brand-mid-grey px-3 py-2 text-sm"
                           >
-                            <span className="flex items-center gap-2">
-                              <Link2 className="h-4 w-4" />
+                            <span className="flex items-center gap-2 text-brand-black">
+                              {p.type === "file" ? (
+                                <FileText className="h-4 w-4 text-brand-dark-grey" />
+                              ) : (
+                                <Link2 className="h-4 w-4 text-brand-dark-grey" />
+                              )}
                               {p.label}
                             </span>
                             <button type="button" onClick={() => removePending(i)} aria-label="Remove">
@@ -396,14 +425,25 @@ export function LessonEditorModal({ open, onOpenChange, courseId, lessonId }: Le
                   </ul>
 
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="inline-flex min-h-9 items-center gap-2 rounded-md border border-brand-mid-grey px-3 text-sm font-medium hover:bg-brand-light-grey"
-                      onClick={() => toast.message("File upload is available in Phase 14.")}
-                    >
-                      <Upload className="h-4 w-4" />
-                      Upload file
-                    </button>
+                    <FileUploadZone
+                      label="Upload attachment file"
+                      allowedTypes="any"
+                      onUpload={(url) => {
+                        const filename = url.split("/").pop() || "Attachment";
+                        if (isEdit && lessonId) {
+                          void addAtt.mutateAsync({
+                            lessonId,
+                            body: { type: "file", url, label: filename },
+                          });
+                        } else {
+                          setPendingAttachments((p: PendingAttachment[]) => [
+                            ...p,
+                            { type: "file", url, label: filename },
+                          ]);
+                        }
+                      }}
+                      className="min-h-[120px]"
+                    />
                   </div>
 
                   <div className="rounded-md border border-dashed border-brand-mid-grey p-3">

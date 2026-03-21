@@ -4,7 +4,8 @@ import * as learnerCatalogService from "@/services/learnerCatalogService";
 import { useAuthStore } from "@/stores/authStore";
 
 const PUBLIC_KEY = "public-courses";
-const MY_COURSES_KEY = "my-courses";
+export const MY_COURSES_KEY = "my-courses";
+export const LEARNER_DETAIL_KEY = "course-learner-detail";
 
 export function usePublicCourses(search: string) {
   const token = useAuthStore((s) => s.token);
@@ -28,5 +29,14 @@ export function useMyCourses() {
   return useQuery({
     queryKey: [MY_COURSES_KEY],
     queryFn: () => learnerCatalogService.getMyCourses(),
+  });
+}
+
+export function useLearnerCourseDetail(courseId: string | undefined) {
+  const token = useAuthStore((s) => s.token);
+  return useQuery({
+    queryKey: [LEARNER_DETAIL_KEY, courseId, token ?? "anon"],
+    queryFn: () => learnerCatalogService.getCourseLearnerDetail(courseId!),
+    enabled: Boolean(courseId),
   });
 }

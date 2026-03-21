@@ -17,6 +17,7 @@ class LessonType(str, Enum):
     VIDEO = "video"
     DOCUMENT = "document"
     IMAGE = "image"
+    QUIZ = "quiz"
 
 
 class Lesson(Base, TimestampMixin):
@@ -47,6 +48,11 @@ class Lesson(Base, TimestampMixin):
     responsible_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    quiz_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("quizzes.id", ondelete="SET NULL"),
         nullable=True,
     )
     deleted_at: Mapped[datetime | None] = mapped_column(

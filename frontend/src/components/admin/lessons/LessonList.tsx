@@ -3,11 +3,12 @@ import {
   BookOpen,
   FileText,
   GripVertical,
-  Image as ImageIcon,
-  Loader2,
+  HelpCircle,
+  ImageIcon,
   MoreVertical,
   PlayCircle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
@@ -28,12 +29,14 @@ const TYPE_LABEL: Record<LessonType, string> = {
   video: "Video",
   document: "Document",
   image: "Image",
+  quiz: "Quiz",
 };
 
 function TypeIcon({ type }: { type: LessonType }) {
   const cls = "h-5 w-5 shrink-0 text-brand-dark-grey";
   if (type === "video") return <PlayCircle className={cls} aria-hidden />;
   if (type === "document") return <FileText className={cls} aria-hidden />;
+  if (type === "quiz") return <HelpCircle className={cls} aria-hidden />;
   return <ImageIcon className={cls} aria-hidden />;
 }
 
@@ -120,8 +123,10 @@ export function LessonList({ courseId }: LessonListProps) {
       ) : null}
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-dark-grey" aria-label="Loading" />
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+          ))}
         </div>
       ) : !lessons?.length ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-brand-mid-grey bg-brand-light-grey px-6 py-14 text-center">

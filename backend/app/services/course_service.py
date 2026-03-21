@@ -7,12 +7,15 @@ import re
 import secrets
 import uuid
 from datetime import datetime, timezone
+from typing import Literal
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
+from app.core.config import settings
+from app.models.attachment_model import LessonAttachment
 from app.models.course_model import Course, CourseAccessRule, CourseVisibility
 from app.models.enrollment_model import Enrollment, EnrollmentStatus
 from app.models.lesson_model import Lesson
@@ -21,12 +24,15 @@ from app.models.user_model import User, UserRole
 from app.schemas.auth_schema import UserPublic
 from app.schemas.course_schema import (
     AddAttendeesResponse,
+    CompleteCourseResult,
     ContactAttendeesResponse,
     CourseDetail,
+    CourseDetailForLearner,
     CourseListItem,
     CreateCourseRequest,
     LearnerCourseItem,
     LearnerCourseStatus,
+    LessonProgressItem,
     PublicCourseItem,
     UpdateCourseOptions,
     UpdateCourseRequest,
@@ -38,6 +44,9 @@ def slugify_title(title: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", s)
     s = re.sub(r"-+", "-", s).strip("-")
     return s[:500] if s else "course"
+
+
+from app.services import email_service
 
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -143,6 +152,7 @@ async def add_attendees(
     course_id: uuid.UUID,
     user: User,
     emails: list[str],
+    background_tasks: BackgroundTasks,
 ) -> AddAttendeesResponse:
     course = await _load_course_for_staff(db, course_id, user)
     if course is None:
@@ -198,6 +208,15 @@ async def add_attendees(
         )
         added += 1
 
+        background_tasks.add_task(
+            email_service.send_course_invitation,
+            to_email=learner.email,
+            to_name=learner.full_name,
+            course_title=course.title,
+            instructor_name=user.full_name,
+            login_url=f"{settings.allowed_origins_list[0]}/login" if settings.allowed_origins_list else f"{settings.upload_dir}/login"
+        )
+
     await db.commit()
     return AddAttendeesResponse(
         added=added,
@@ -212,6 +231,7 @@ async def contact_attendees(
     user: User,
     subject: str,
     body: str,
+    background_tasks: BackgroundTasks,
 ) -> ContactAttendeesResponse:
     course = await _load_course_for_staff(db, course_id, user)
     if course is None:
@@ -219,11 +239,24 @@ async def contact_attendees(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
         )
-    n = await db.scalar(
-        select(func.count(Enrollment.id)).where(Enrollment.course_id == course_id),
+    result = await db.execute(
+        select(User)
+        .join(Enrollment, Enrollment.user_id == User.id)
+        .where(Enrollment.course_id == course_id, User.deleted_at.is_(None))
     )
-    _ = (subject, body)
-    return ContactAttendeesResponse(queued=int(n or 0))
+    learners = result.scalars().all()
+
+    for learner in learners:
+        background_tasks.add_task(
+            email_service.send_instructor_message,
+            to_email=learner.email,
+            to_name=learner.full_name,
+            course_title=course.title,
+            subject=subject,
+            body=body,
+        )
+
+    return ContactAttendeesResponse(queued=len(learners))
 
 
 async def _next_unique_slug(
@@ -534,6 +567,132 @@ def _enrollment_status_to_learner_course_status(status: EnrollmentStatus) -> Lea
     return "completed"
 
 
+def _lesson_row_status_from_progress(row: LessonProgress | None) -> Literal["not_started", "in_progress", "completed"]:
+    if row is None:
+        return "not_started"
+    if row.completed_at is not None:
+        return "completed"
+    if (row.time_spent_seconds or 0) > 0:
+        return "in_progress"
+    return "not_started"
+
+
+async def get_course_detail_for_learner(
+    db: AsyncSession,
+    course_id: uuid.UUID,
+    current_user: User | None,
+) -> CourseDetailForLearner:
+    result = await db.execute(
+        select(Course).where(
+            Course.id == course_id,
+            Course.deleted_at.is_(None),
+            Course.is_published.is_(True),
+        ),
+    )
+    course = result.scalar_one_or_none()
+    if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+
+    if course.visibility == CourseVisibility.SIGNED_IN and current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+
+    enrollment: Enrollment | None = None
+    if current_user is not None:
+        er = await db.execute(
+            select(Enrollment).where(
+                Enrollment.user_id == current_user.id,
+                Enrollment.course_id == course_id,
+            ),
+        )
+        enrollment = er.scalar_one_or_none()
+
+    lr = await db.execute(
+        select(Lesson)
+        .where(
+            Lesson.course_id == course_id,
+            Lesson.deleted_at.is_(None),
+        )
+        .order_by(Lesson.sort_order.asc(), Lesson.created_at.asc()),
+    )
+    lessons: list[Lesson] = list(lr.scalars())
+
+    lesson_ids = [les.id for les in lessons]
+    progress_by_lesson: dict[uuid.UUID, LessonProgress] = {}
+    if enrollment is not None and lesson_ids:
+        pr = await db.execute(
+            select(LessonProgress).where(LessonProgress.enrollment_id == enrollment.id),
+        )
+        for lp in pr.scalars():
+            progress_by_lesson[lp.lesson_id] = lp
+
+    has_att: set[uuid.UUID] = set()
+    if lesson_ids:
+        ar = await db.execute(
+            select(LessonAttachment.lesson_id)
+            .where(LessonAttachment.lesson_id.in_(lesson_ids))
+            .distinct(),
+        )
+        has_att = {row[0] for row in ar.all()}
+
+    items: list[LessonProgressItem] = []
+    completed = 0
+    for les in lessons:
+        st = _lesson_row_status_from_progress(progress_by_lesson.get(les.id))
+        if st == "completed":
+            completed += 1
+        items.append(
+            LessonProgressItem(
+                lesson_id=les.id,
+                title=les.title,
+                type=les.type.value,
+                status=st,
+                sort_order=les.sort_order,
+                has_attachments=les.id in has_att,
+                duration_seconds=les.duration_seconds,
+            ),
+        )
+
+    total = len(lessons)
+    incomplete = total - completed
+    pct = round((completed / total) * 1000) / 10.0 if total > 0 else 0.0
+
+    en_stat: LearnerCourseStatus | None
+    if current_user is None:
+        en_stat = None
+    elif enrollment is None:
+        en_stat = "not_enrolled"
+    else:
+        en_stat = _enrollment_status_to_learner_course_status(enrollment.status)
+
+    total_dur = sum(int(les.duration_seconds) for les in lessons)
+
+    return CourseDetailForLearner(
+        id=course.id,
+        title=course.title,
+        slug=course.slug,
+        description=course.description,
+        cover_image_url=course.cover_image_url,
+        tags=list(course.tags or []),
+        visibility=course.visibility,
+        access_rule=course.access_rule,
+        price_cents=course.price_cents,
+        average_rating=None,
+        total_duration_seconds=total_dur,
+        total_lessons=total,
+        completed_count=completed,
+        incomplete_count=incomplete,
+        completion_percentage=pct,
+        lessons=items,
+        enrollment_status=en_stat,
+    )
+
+
 def _progress_by_enrollment_subq():
     return (
         select(
@@ -713,3 +872,54 @@ async def get_my_courses(
             ),
         )
     return items
+
+
+async def complete_course_for_learner(
+    db: AsyncSession,
+    course_id: uuid.UUID,
+    user: User,
+) -> CompleteCourseResult:
+    """Mark the learner's enrollment as completed (idempotent if already completed)."""
+    if user.role != UserRole.LEARNER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Learner access only",
+        )
+    c_row = await db.execute(
+        select(Course).where(Course.id == course_id, Course.deleted_at.is_(None)),
+    )
+    course = c_row.scalar_one_or_none()
+    if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+    e_row = await db.execute(
+        select(Enrollment).where(
+            Enrollment.user_id == user.id,
+            Enrollment.course_id == course_id,
+        ),
+    )
+    en = e_row.scalar_one_or_none()
+    if en is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enrolled in this course",
+        )
+    now = datetime.now(timezone.utc)
+    if en.status == EnrollmentStatus.COMPLETED:
+        return CompleteCourseResult(
+            completed=True,
+            completion_date=en.completed_at or now,
+        )
+
+    if en.status not in (EnrollmentStatus.ENROLLED, EnrollmentStatus.IN_PROGRESS):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Enrollment cannot be completed",
+        )
+    en.status = EnrollmentStatus.COMPLETED
+    en.completed_at = now
+    await db.commit()
+    await db.refresh(en)
+    return CompleteCourseResult(completed=True, completion_date=en.completed_at)

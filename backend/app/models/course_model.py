@@ -9,7 +9,7 @@ from enum import Enum
 
 from sqlalchemy import Boolean, DateTime, Enum as SAEnum, ForeignKey, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, TimestampMixin
 
@@ -78,4 +78,11 @@ class Course(Base, TimestampMixin):
     deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
+    )
+
+    reviews: Mapped[list["Review"]] = relationship(
+        "Review",
+        back_populates="course",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )

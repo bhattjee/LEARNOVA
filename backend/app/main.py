@@ -11,7 +11,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.limiter import limiter
 from app.middleware.cors_middleware import add_cors_middleware
-from app.routers import auth, courses, health, learner, lessons, quizzes, reporting, users
+from app.routers import auth, courses, health, learner, lessons, progress, quizzes, reporting, reviews, uploads, users
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("learnova")
@@ -27,10 +27,13 @@ app.include_router(health.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(courses.router, prefix="/api/v1/courses", tags=["courses"])
 app.include_router(learner.router, prefix="/api/v1", tags=["learner"])
+app.include_router(progress.router, prefix="/api/v1/progress", tags=["progress"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(lessons.router, prefix="/api/v1", tags=["lessons"])
 app.include_router(quizzes.router, prefix="/api/v1", tags=["quizzes"])
 app.include_router(reporting.router, prefix="/api/v1", tags=["reporting"])
+app.include_router(reviews.router, prefix="/api/v1/courses", tags=["reviews"])
+app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["uploads"])
 
 
 @app.on_event("startup")

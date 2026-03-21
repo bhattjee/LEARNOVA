@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 import * as authService from "@/services/authService";
 import type { UserRole } from "@/types/auth.types";
@@ -30,6 +31,7 @@ export function LoginPage(_props: LoginPageProps) {
     try {
       const res = await authService.login({ email: email.trim(), password });
       loginStore(res.access_token, res.user);
+      toast.success("Welcome back!");
       navigate(roleHome(res.user.role), { replace: true });
     } catch {
       setError("Invalid email or password");

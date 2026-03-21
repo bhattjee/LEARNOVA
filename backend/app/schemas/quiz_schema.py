@@ -135,3 +135,70 @@ class SaveQuestionsRequest(BaseModel):
         if len(v) < 1:
             raise ValueError("At least one question is required")
         return v
+
+
+# —— Learner / Playback ——
+
+
+class QuizIntroResponse(BaseModel):
+    quiz_id: UUID
+    title: str
+    total_questions: int
+    allows_multiple_attempts: bool = True
+    user_attempt_count: int
+    last_attempt_score: float | None = None
+
+
+class StartAttemptOption(BaseModel):
+    id: UUID
+    text: str
+
+
+class StartAttemptQuestion(BaseModel):
+    id: UUID
+    text: str
+    options: list[StartAttemptOption]
+
+
+class StartAttemptResponse(BaseModel):
+    attempt_id: UUID
+    questions: list[StartAttemptQuestion]
+
+
+class SubmitAnswerItem(BaseModel):
+    question_id: UUID
+    selected_option_ids: list[UUID]
+
+
+class SubmitAnswerRequest(BaseModel):
+    answers: list[SubmitAnswerItem]
+
+
+class BadgeInfo(BaseModel):
+    name: str
+    min_points: int
+    icon: str
+
+
+class NextBadgeInfo(BaseModel):
+    name: str
+    min_points: int
+    icon: str
+    points_to_next: int
+
+
+class SubmitResult(BaseModel):
+    score_percentage: float
+    points_awarded: int
+    total_points_now: int
+    correct_count: int
+    total_questions: int
+    attempt_number: int
+    new_badge: str | None = None
+    current_badge: BadgeInfo
+    next_badge: NextBadgeInfo | None = None
+    points_to_next: int | None = None
+
+
+class SubmitResultEnvelope(BaseModel):
+    data: SubmitResult

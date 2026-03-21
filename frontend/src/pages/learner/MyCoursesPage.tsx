@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { LearnerNavbar } from "@/components/common/LearnerNavbar";
 import { LearnerCourseCard } from "@/components/learner/CourseCard";
 import { ProfilePanel } from "@/components/learner/ProfilePanel";
@@ -51,7 +52,19 @@ export function MyCoursesPage() {
             </div>
 
             {isLoading ? (
-              <p className="mt-10 text-sm text-brand-dark-grey">Loading your courses…</p>
+              <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="rounded-xl border border-brand-mid-grey bg-white p-4 shadow-sm">
+                    <Skeleton className="aspect-video w-full rounded-lg" />
+                    <Skeleton className="mt-4 h-6 w-3/4" />
+                    <Skeleton className="mt-2 h-4 w-1/2" />
+                    <div className="mt-6 flex items-center justify-between">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-8 w-24 rounded-md" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : null}
 
             {isError ? (
@@ -61,11 +74,16 @@ export function MyCoursesPage() {
             ) : null}
 
             {empty ? (
-              <p className="mt-10 text-sm text-brand-dark-grey">
-                {courses.length === 0
-                  ? "You are not enrolled in any courses yet."
-                  : "No courses match your search."}
-              </p>
+              <div className="mt-16 flex flex-col items-center text-center">
+                <h3 className="text-lg font-bold text-brand-black">
+                  {courses.length === 0 ? "Start your journey" : "No results"}
+                </h3>
+                <p className="mt-1 text-sm text-brand-dark-grey max-w-[280px]">
+                  {courses.length === 0
+                    ? "You haven't enrolled in any courses yet. Visit the catalog to get started!"
+                    : `No courses in your dashboard match "${search}".`}
+                </p>
+              </div>
             ) : null}
 
             {!isLoading && !isError && filtered.length > 0 ? (
@@ -77,11 +95,9 @@ export function MyCoursesPage() {
             ) : null}
           </section>
 
-          {user ? (
-            <div className="order-1 w-full lg:order-2 lg:w-[280px]">
-              <ProfilePanel user={user} />
-            </div>
-          ) : null}
+          <div className="order-1 w-full lg:order-2 lg:w-[280px]">
+            <ProfilePanel user={user} isLoading={!user} />
+          </div>
         </div>
       </div>
     </div>

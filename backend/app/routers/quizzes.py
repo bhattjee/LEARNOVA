@@ -15,17 +15,24 @@ from app.models.user_model import User, UserRole
 from app.schemas.quiz_schema import (
     CreateQuizRequest,
     QuizDetailEnvelope,
+    QuizIntroResponse,
     QuizItemEnvelope,
     QuizzesListResponse,
     SaveQuestionsRequest,
+    StartAttemptResponse,
+    SubmitAnswerRequest,
+    SubmitResultEnvelope,
     UpdateQuizRequest,
 )
 from app.services.quiz_service import (
     create_quiz,
     delete_quiz,
     get_quiz_detail,
+    get_quiz_intro,
     get_quizzes_for_course,
     save_questions,
+    start_quiz_attempt,
+    submit_quiz,
     update_quiz,
 )
 
@@ -99,3 +106,37 @@ async def save_questions_route(
 ) -> QuizDetailEnvelope:
     detail = await save_questions(db, quiz_id, current_user, body)
     return QuizDetailEnvelope(data=detail)
+
+
+# —— Learner side — playback routes ——
+
+LearnerUser = Annotated[User, Depends(require_roles(UserRole.LEARNER))]
+
+
+@router.get("/{quiz_id}/intro", response_model=QuizIntroResponse)
+async def get_quiz_intro_route(
+    quiz_id: UUID,
+    current_user: LearnerUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> QuizIntroResponse:
+    return await get_quiz_intro(db, quiz_id, current_user)
+
+
+@router.post("/{quiz_id}/start", response_model=StartAttemptResponse)
+async def start_quiz_attempt_route(
+    quiz_id: UUID,
+    current_user: LearnerUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> StartAttemptResponse:
+    return await start_quiz_attempt(db, quiz_id, current_user)
+
+
+@router.post("/quiz-attempts/{attempt_id}/submit", response_model=SubmitResultEnvelope)
+async def submit_quiz_attempt_route(
+    attempt_id: UUID,
+    current_user: LearnerUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    body: SubmitAnswerRequest,
+) -> SubmitResultEnvelope:
+    result = await submit_quiz(db, attempt_id, current_user, body)
+    return SubmitResultEnvelope(data=result)

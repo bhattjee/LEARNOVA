@@ -1,6 +1,6 @@
 import type { UserPublic } from "@/types/auth.types";
 
-export type LessonType = "video" | "document" | "image";
+export type LessonType = "video" | "document" | "image" | "quiz";
 export type AttachmentType = "file" | "link";
 
 export interface AttachmentItem {
@@ -22,6 +22,7 @@ export interface LessonItem {
   sort_order: number;
   responsible_user: UserPublic | null;
   attachments: AttachmentItem[];
+  quiz_id?: string | null;
 }
 
 export interface CreateLessonRequest {

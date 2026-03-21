@@ -1,4 +1,5 @@
 import { Trophy } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { BadgeDisplay } from "@/components/learner/BadgeDisplay";
 import { learnerBadgeState } from "@/constants/learnerBadges";
 import type { UserPublic } from "@/types/auth.types";
@@ -15,12 +16,36 @@ function initials(fullName: string): string {
 }
 
 interface ProfilePanelProps {
-  user: UserPublic;
+  user: UserPublic | null;
+  isLoading?: boolean;
 }
 
-export function ProfilePanel({ user }: ProfilePanelProps) {
-  const points = user.total_points ?? 0;
+export function ProfilePanel({ user, isLoading }: ProfilePanelProps) {
+  const points = user?.total_points ?? 0;
   const { sorted, current, next, currentIdx, progressToNext, pointsToNext } = learnerBadgeState(points);
+
+  if (isLoading || !user) {
+    return (
+      <aside className="w-full rounded-xl border border-brand-mid-grey bg-white p-5 lg:w-[280px] lg:shrink-0">
+        <Skeleton className="h-6 w-24" />
+        <div className="mt-4 flex flex-col items-center">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <Skeleton className="mt-3 h-6 w-3/4" />
+          <Skeleton className="mt-1 h-4 w-1/2" />
+        </div>
+        <hr className="my-5 border-brand-mid-grey" />
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="mt-1 h-8 w-16" />
+        <Skeleton className="mt-4 h-12 w-full rounded-lg" />
+        <div className="mt-5 space-y-2">
+          <Skeleton className="h-3 w-16" />
+          <div className="flex gap-2">
+             {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-10 rounded-lg" />)}
+          </div>
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside className="w-full rounded-xl border border-brand-mid-grey bg-white p-5 lg:w-[280px] lg:shrink-0">

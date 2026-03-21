@@ -3,6 +3,7 @@ quiz_service.py — Business logic for quiz and question management.
 Used exclusively by instructors and admins.
 """
 
+import random
 import uuid
 from datetime import datetime, timezone
 
@@ -11,18 +12,31 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.quiz_model import Question, QuestionOption, Quiz
+from app.models.enrollment_model import Enrollment
+from app.models.lesson_model import Lesson, LessonType
+from app.models.lesson_progress_model import LessonProgress
+from app.models.quiz_model import Question, QuestionOption, Quiz, QuizAnswer, QuizAttempt
 from app.models.user_model import User
 from app.schemas.quiz_schema import (
+    BadgeInfo,
     CreateQuizRequest,
+    NextBadgeInfo,
     OptionDetail,
     QuestionDetail,
     QuizDetail,
+    QuizIntroResponse,
     QuizItem,
     SaveQuestionsRequest,
+    StartAttemptOption,
+    StartAttemptQuestion,
+    StartAttemptResponse,
+    SubmitAnswerRequest,
+    SubmitResult,
     UpdateQuizRequest,
 )
+from app.services.badge_service import get_badge_for_points, get_badge_name, get_next_badge
 from app.services.course_service import _load_course_for_staff
+from app.services.progress_service import complete_lesson
 
 
 def _validate_point_tiers(a1: int, a2: int, a3: int, a4: int) -> None:
@@ -269,4 +283,231 @@ async def save_questions(
 
     await db.commit()
     return await get_quiz_detail(db, quiz_id, user)
+
+
+# —— Learner side — playback logic ——
+
+
+async def get_quiz_intro(db: AsyncSession, quiz_id: uuid.UUID, user: User) -> QuizIntroResponse:
+    quiz = await _get_quiz_or_404(db, quiz_id)
+    if quiz is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
+
+    # Count questions
+    q_count = await db.scalar(
+        select(func.count(Question.id)).where(
+            Question.quiz_id == quiz_id, Question.deleted_at.is_(None)
+        )
+    )
+
+    # Attempts
+    result = await db.execute(
+        select(QuizAttempt)
+        .where(QuizAttempt.quiz_id == quiz_id, QuizAttempt.user_id == user.id)
+        .order_by(QuizAttempt.attempt_number.desc())
+    )
+    attempts = result.scalars().all()
+    user_attempt_count = len(attempts)
+    last_attempt_score = attempts[0].score_percentage if attempts else None
+
+    return QuizIntroResponse(
+        quiz_id=quiz.id,
+        title=quiz.title,
+        total_questions=int(q_count or 0),
+        allows_multiple_attempts=True,
+        user_attempt_count=user_attempt_count,
+        last_attempt_score=last_attempt_score,
+    )
+
+
+async def start_quiz_attempt(db: AsyncSession, quiz_id: uuid.UUID, user: User) -> StartAttemptResponse:
+    quiz = await _get_quiz_or_404(db, quiz_id)
+    if quiz is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
+
+    # Current attempts
+    count = await db.scalar(
+        select(func.count(QuizAttempt.id)).where(
+            QuizAttempt.quiz_id == quiz_id, QuizAttempt.user_id == user.id
+        )
+    )
+
+    # Create new attempt
+    attempt = QuizAttempt(
+        user_id=user.id,
+        quiz_id=quiz_id,
+        attempt_number=int(count or 0) + 1,
+        started_at=datetime.now(timezone.utc),
+    )
+    db.add(attempt)
+    await db.flush()
+
+    # Load questions + options
+    result = await db.execute(
+        select(Question)
+        .where(Question.quiz_id == quiz_id, Question.deleted_at.is_(None))
+        .options(selectinload(Question.options))
+    )
+    questions = list(result.scalars().all())
+    random.shuffle(questions)
+
+    resp_questions = []
+    for q in questions:
+        opts = list(q.options)
+        random.shuffle(opts)
+        resp_questions.append(
+            StartAttemptQuestion(
+                id=q.id,
+                text=q.text,
+                options=[StartAttemptOption(id=o.id, text=o.text) for o in opts],
+            )
+        )
+
+    await db.commit()
+    return StartAttemptResponse(attempt_id=attempt.id, questions=resp_questions)
+
+
+async def submit_quiz(
+    db: AsyncSession,
+    attempt_id: uuid.UUID,
+    user: User,
+    data: SubmitAnswerRequest,
+) -> SubmitResult:
+    # Load attempt
+    result = await db.execute(
+        select(QuizAttempt).where(QuizAttempt.id == attempt_id, QuizAttempt.user_id == user.id)
+    )
+    attempt = result.scalar_one_or_none()
+    if not attempt or attempt.completed_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Valid active attempt not found",
+        )
+
+    # Load quiz for points config
+    quiz = await _get_quiz_or_404(db, attempt.quiz_id)
+    assert quiz
+
+    # Load all questions and correct answers for this quiz
+    q_result = await db.execute(
+        select(Question)
+        .where(Question.quiz_id == attempt.quiz_id, Question.deleted_at.is_(None))
+        .options(selectinload(Question.options))
+    )
+    questions = q_result.scalars().all()
+    q_map = {q.id: q for q in questions}
+    total_questions = len(questions)
+
+    if total_questions == 0:
+        raise HTTPException(status_code=400, detail="Quiz has no questions")
+
+    correct_count = 0
+    user_ans_map = {a.question_id: a.selected_option_ids for a in data.answers}
+
+    for q_id, q in q_map.items():
+        correct_ids = sorted([o.id for o in q.options if o.is_correct])
+        user_ids = sorted(user_ans_map.get(q_id, []))
+        is_correct = correct_ids == user_ids
+        if is_correct:
+            correct_count += 1
+
+        db.add(
+            QuizAnswer(
+                attempt_id=attempt.id,
+                question_id=q_id,
+                selected_option_ids=user_ids,
+                is_correct=is_correct,
+            )
+        )
+
+    score_pct = (correct_count / total_questions) * 100
+    attempt.score_percentage = score_pct
+    attempt.completed_at = datetime.now(timezone.utc)
+
+    # Points logic
+    points = 0
+    if score_pct >= 80:  # Passing score threshold? Placeholder: if they get points at all
+        if attempt.attempt_number == 1:
+            points = quiz.attempt_1_points
+        elif attempt.attempt_number == 2:
+            points = quiz.attempt_2_points
+        elif attempt.attempt_number == 3:
+            points = quiz.attempt_3_points
+        else:
+            points = quiz.attempt_4plus_points
+    
+    # Only award points if this is a better or equal score? 
+    # Simplest: award points once per quiz success, or update based on rules.
+    # Instruction says: "Points awarded depend on attempt number". 
+    # Usually you only get points for the first "pass" or highest score.
+    # Let's check for previous successful attempts.
+    prev_success = await db.scalar(
+        select(func.count(QuizAttempt.id)).where(
+            QuizAttempt.quiz_id == attempt.quiz_id,
+            QuizAttempt.user_id == user.id,
+            QuizAttempt.points_awarded > 0,
+            QuizAttempt.id != attempt_id
+        )
+    )
+    
+    if prev_success:
+        points = 0 # Already earned points for this quiz
+    
+    attempt.points_awarded = points
+    
+    old_points = user.total_points
+    user.total_points += points
+    new_points = user.total_points
+    
+    old_badge_name = get_badge_name(old_points)
+    new_badge_name = get_badge_name(new_points)
+    badge_unlocked = new_badge_name if old_badge_name != new_badge_name else None
+
+    cur_b = get_badge_for_points(new_points)
+    current_badge = BadgeInfo(
+        name=cur_b["name"],
+        min_points=cur_b["min_points"],
+        icon=cur_b["icon"],
+    )
+    nxt_raw = get_next_badge(new_points)
+    next_badge_model: NextBadgeInfo | None = None
+    points_to_next_val: int | None = None
+    if nxt_raw is not None:
+        nb = nxt_raw["badge"]
+        ptn = nxt_raw["points_to_next"]
+        next_badge_model = NextBadgeInfo(
+            name=nb["name"],
+            min_points=nb["min_points"],
+            icon=nb["icon"],
+            points_to_next=ptn,
+        )
+        points_to_next_val = ptn
+
+    # Mark quiz lesson as completed
+    # We need the lesson_id linked to this quiz.
+    # Quizzes are linked to lessons in 'Lesson.quiz_id'.
+    l_result = await db.execute(
+        select(Lesson).where(Lesson.quiz_id == attempt.quiz_id, Lesson.deleted_at.is_(None))
+    )
+    lesson = l_result.scalar_one_or_none()
+    if lesson:
+        # We use progress_service to complete it
+        # Note: we need enrollment_id, but complete_lesson fetches it.
+        # We just need course_id.
+        await complete_lesson(db, user, lesson.id, lesson.course_id, time_spent_seconds=0)
+
+    await db.commit()
+
+    return SubmitResult(
+        score_percentage=score_pct,
+        points_awarded=points,
+        total_points_now=new_points,
+        correct_count=correct_count,
+        total_questions=total_questions,
+        attempt_number=attempt.attempt_number,
+        new_badge=badge_unlocked,
+        current_badge=current_badge,
+        next_badge=next_badge_model,
+        points_to_next=points_to_next_val,
+    )
 

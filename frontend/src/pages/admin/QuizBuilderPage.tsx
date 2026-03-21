@@ -81,6 +81,8 @@ export function QuizBuilderPage() {
   const [titleSaving, setTitleSaving] = useState(false);
   const [rewardsSaving, setRewardsSaving] = useState(false);
 
+  const titleRef = useRef<HTMLInputElement>(null);
+  const questionTextRef = useRef<HTMLTextAreaElement>(null);
   const initRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -284,6 +286,10 @@ export function QuizBuilderPage() {
     const err = validateDraft();
     if (err) {
       toast.error(err);
+      // If it's a question error, focus the question text
+      if (err.includes("Question")) {
+        questionTextRef.current?.focus();
+      }
       return;
     }
     const t = title.trim();
@@ -356,9 +362,10 @@ export function QuizBuilderPage() {
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
           <div className="relative min-w-[200px] max-w-xl flex-1">
             <input
+              ref={titleRef}
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
               onBlur={() => void onTitleBlur()}
               className="h-10 w-full rounded-md border border-brand-mid-grey px-3 text-base font-semibold text-brand-black outline-none focus:border-primary focus:ring-2"
               placeholder="Quiz title"
@@ -435,6 +442,7 @@ export function QuizBuilderPage() {
                 </label>
                 <textarea
                   id="q-text"
+                  ref={questionTextRef}
                   value={activeQ.text}
                   onChange={(e) => updateQuestionText(safeIdx, e.target.value)}
                   rows={5}
