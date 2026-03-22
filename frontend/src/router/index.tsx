@@ -9,6 +9,7 @@ import { DashboardPage } from "@/pages/admin/DashboardPage";
 import { CourseFormPage } from "@/pages/admin/CourseFormPage";
 import { QuizBuilderPage } from "@/pages/admin/QuizBuilderPage";
 import { ReportingPage } from "@/pages/admin/ReportingPage";
+import { SettingsPage } from "@/pages/admin/SettingsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { AdminLayout } from "@/components/common/AdminLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -87,6 +88,18 @@ export function AppRouter() {
               <RoleRoute allowedRoles={["admin", "instructor"]}>
                 <AdminLayout title="Reporting">
                   <ReportingPage />
+                </AdminLayout>
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["admin", "instructor"]}>
+                <AdminLayout title="Setting">
+                  <SettingsPage />
                 </AdminLayout>
               </RoleRoute>
             </ProtectedRoute>

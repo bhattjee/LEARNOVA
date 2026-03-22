@@ -3,19 +3,22 @@ import { useQuery } from "@tanstack/react-query";
 import * as quizService from "@/services/quizService";
 import { QuizIntroScreen } from "@/components/learner/quiz/QuizIntroScreen";
 import { QuizQuestionPage } from "@/components/learner/quiz/QuizQuestionPage";
-import { PointsPopup } from "@/components/learner/quiz/PointsPopup";
+import { QuizResultEmbed } from "@/components/learner/LessonPlayer/QuizResultEmbed";
 import { useQuizStore } from "@/stores/quizStore";
 import type { StartAttemptQuestion, SubmitResult } from "@/types/quiz.types";
 
 interface QuizPlayerProps {
   quizId: string;
+  /** Called when the learner finishes the quiz (server result). */
+  onQuizComplete?: (result: SubmitResult, completedAtIso: string) => void;
 }
 
-export function QuizPlayer({ quizId }: QuizPlayerProps) {
-  const { currentAttemptId, reset } = useQuizStore();
+export function QuizPlayer({ quizId, onQuizComplete }: QuizPlayerProps) {
+  const { reset } = useQuizStore();
   const [view, setView] = useState<"intro" | "questions" | "result">("intro");
   const [questions, setQuestions] = useState<StartAttemptQuestion[]>([]);
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [completedAt, setCompletedAt] = useState<string | null>(null);
 
   const { data: intro, isLoading: introLoading, refetch: refetchIntro } = useQuery({
     queryKey: ["quiz-intro", quizId],
@@ -24,56 +27,48 @@ export function QuizPlayer({ quizId }: QuizPlayerProps) {
   });
 
   useEffect(() => {
-    // If there's no active attempt, show intro
-    if (!currentAttemptId) {
-      setView("intro");
-    }
-  }, [currentAttemptId]);
+    reset();
+    setView("intro");
+    setQuestions([]);
+    setResult(null);
+    setCompletedAt(null);
+  }, [quizId, reset]);
 
-  const handleStart = async () => {
-    // The QuizIntroScreen calls startQuizAttempt and updates the store
-    // We just need to fetch the questions (or they were already returned by startQuizAttempt)
-    // Actually, QuizIntroScreen calls startQuizAttempt and then onStart()
-    // Let's refetch the attempt questions
-    try {
-      const res = await quizService.startQuizAttempt(quizId);
-      setQuestions(res.questions);
-      setView("questions");
-    } catch (err) {
-      // toast is handled in QuizIntroScreen
-    }
+  const handleQuizStarted = (q: StartAttemptQuestion[]) => {
+    setQuestions(q);
+    setView("questions");
   };
 
   const handleComplete = (res: SubmitResult) => {
+    const at = new Date().toISOString();
     setResult(res);
+    setCompletedAt(at);
     setView("result");
+    onQuizComplete?.(res, at);
   };
 
-  const handleClosePopup = () => {
+  const handleContinueFromResult = () => {
     reset();
     setView("intro");
-    refetchIntro();
-    // Maybe notify parent to go to next lesson?
+    void refetchIntro();
   };
 
   if (introLoading || !intro) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-400">
-        Loading quiz details...
-      </div>
+      <div className="flex h-full items-center justify-center text-zinc-400">Loading quiz details…</div>
     );
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full min-h-0">
       {view === "intro" && (
-        <QuizIntroScreen quizIntro={intro} onStart={handleStart} />
+        <QuizIntroScreen quizIntro={intro} onStart={handleQuizStarted} variant="dark" />
       )}
       {view === "questions" && (
-        <QuizQuestionPage questions={questions} onComplete={handleComplete} />
+        <QuizQuestionPage questions={questions} onComplete={handleComplete} variant="dark" />
       )}
-      {view === "result" && result && (
-        <PointsPopup result={result} onClose={handleClosePopup} />
+      {view === "result" && result && completedAt && (
+        <QuizResultEmbed result={result} completedAt={completedAt} onContinue={handleContinueFromResult} />
       )}
     </div>
   );

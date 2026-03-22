@@ -39,7 +39,7 @@ export function PublishToggle({ courseId, isPublished, website }: PublishToggleP
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-stretch gap-1 sm:items-end">
       <button
         type="button"
         role="switch"
@@ -47,7 +47,7 @@ export function PublishToggle({ courseId, isPublished, website }: PublishToggleP
         disabled={mutation.isPending}
         onClick={() => void handleClick()}
         className={cn(
-          "relative inline-flex h-9 min-w-[120px] items-center justify-center rounded-md px-3 text-sm font-medium transition-colors",
+          "relative inline-flex h-9 w-full items-center justify-center rounded-md px-3 text-sm font-medium transition-colors sm:w-auto sm:min-w-[120px]",
           optimistic
             ? "bg-status-success text-white hover:opacity-90"
             : "bg-brand-mid-grey text-brand-dark-grey hover:bg-brand-mid-grey/90",

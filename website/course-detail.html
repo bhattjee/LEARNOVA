@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="images/logo.svg" />
+    <link rel="apple-touch-icon" href="images/logo.png" />
     <title>Python Masterclass 2024 - Learnova</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -46,9 +49,7 @@
     <nav class="sticky top-0 z-50 bg-white border-b border-light-gray shadow-sm">
         <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
             <a href="index.html" class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <i data-lucide="graduation-cap" class="text-white w-5 h-5"></i>
-                </div>
+                <img src="images/logo.png" alt="" class="h-8 w-auto rounded-md" />
                 <span class="text-2xl font-bold text-primary">Learnova</span>
             </a>
             <div class="hidden md:flex space-x-8">
@@ -96,7 +97,7 @@
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <button class="bg-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-lg text-sm" onclick="window.location.href='player.html'">Continue Learning</button>
+                        <button type="button" data-learnova="courses" class="bg-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-lg text-sm">Continue Learning</button>
                         <button class="p-3 border border-light-gray rounded-lg hover:bg-white transition-all text-gray-400"><i data-lucide="heart" class="w-5 h-5"></i></button>
                     </div>
                 </div>
@@ -137,7 +138,7 @@
 
                 <div class="space-y-3">
                     <!-- Lesson 1 (Completed) -->
-                    <div class="lesson-item flex items-center justify-between p-4 border border-light-gray rounded-xl cursor-pointer transition-all bg-gray-50/50" onclick="window.location.href='player.html'">
+                    <div class="lesson-item flex items-center justify-between p-4 border border-light-gray rounded-xl cursor-pointer transition-all bg-gray-50/50" data-learnova="courses" role="link" tabindex="0">
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-accent-green border border-accent-green/20">
                                 <i data-lucide="check" class="w-5 h-5"></i>
@@ -151,7 +152,7 @@
                     </div>
 
                     <!-- Lesson 2 (Active/Current) -->
-                    <div class="lesson-item flex items-center justify-between p-4 border-2 border-primary rounded-xl cursor-pointer transition-all bg-blue-50/20" onclick="window.location.href='player.html'">
+                    <div class="lesson-item flex items-center justify-between p-4 border-2 border-primary rounded-xl cursor-pointer transition-all bg-blue-50/20" data-learnova="courses" role="link" tabindex="0">
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white shadow-md shadow-primary/30">
                                 <i data-lucide="play" class="w-5 h-5 fill-white"></i>
@@ -165,7 +166,7 @@
                     </div>
 
                     <!-- Lesson 3 (Locked/Not started) -->
-                    <div class="lesson-item flex items-center justify-between p-4 border border-light-gray rounded-xl cursor-pointer transition-all opacity-60 hover:opacity-100" onclick="window.location.href='player.html'">
+                    <div class="lesson-item flex items-center justify-between p-4 border border-light-gray rounded-xl cursor-pointer transition-all opacity-60 hover:opacity-100" data-learnova="courses" role="link" tabindex="0">
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-gray-400 border border-gray-100">
                                 <i data-lucide="lock" class="w-5 h-5"></i>
@@ -209,6 +210,7 @@
         </div>
     </footer>
 
+    <script src="js/app-links.js"></script>
     <script>
         lucide.createIcons();
     </script>

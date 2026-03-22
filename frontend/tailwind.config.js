@@ -30,10 +30,13 @@ export default {
                 },
             },
             borderRadius: {
-                sm: "6px",
-                md: "8px",
-                lg: "12px",
-                xl: "16px",
+                sm: "16px",
+                md: "24px",
+                lg: "32px",
+                xl: "64px",
+            },
+            fontWeight: {
+                medium: "600",
             },
         },
     },

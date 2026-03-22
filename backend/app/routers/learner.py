@@ -15,12 +15,14 @@ from app.services.course_service import get_my_courses
 
 router = APIRouter()
 
-LearnerUser = Annotated[User, Depends(require_roles(UserRole.LEARNER))]
+AnyUser = Annotated[
+    User, Depends(require_roles(UserRole.LEARNER, UserRole.ADMIN, UserRole.INSTRUCTOR))
+]
 
 
 @router.get("/my-courses", response_model=LearnerCoursesListResponse)
 async def list_my_courses_route(
-    current_user: LearnerUser,
+    current_user: AnyUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> LearnerCoursesListResponse:
     items = await get_my_courses(db, current_user)

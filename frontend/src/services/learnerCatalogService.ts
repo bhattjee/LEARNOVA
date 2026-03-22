@@ -36,3 +36,8 @@ export async function completeLearnerCourse(courseId: string): Promise<CompleteC
   const res = await apiClient.post<{ data: CompleteCourseResult }>(`/api/v1/courses/${courseId}/complete`);
   return res.data.data;
 }
+
+/** Record enrollment after mock checkout (no real payment gateway). */
+export async function purchaseCourse(courseId: string): Promise<void> {
+  await apiClient.post(`/api/v1/courses/${courseId}/purchase`);
+}

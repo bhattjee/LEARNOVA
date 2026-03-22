@@ -4,20 +4,26 @@ import {
   Check,
   Loader2,
   Mail,
+  Plus,
+  Share2,
   UserPlus,
 } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { AddAttendeesWizard } from "@/components/admin/attendees/AddAttendeesWizard";
 import { ContactAttendeesWizard } from "@/components/admin/attendees/ContactAttendeesWizard";
+import { TransactionalEmailInfoDialog } from "@/components/admin/attendees/TransactionalEmailInfoDialog";
+import { CreateCourseModal } from "@/components/admin/courses/CreateCourseModal";
 import { CourseOptions } from "@/components/admin/courses/CourseOptions";
 import { LessonList } from "@/components/admin/lessons/LessonList";
 import { PublishToggle } from "@/components/admin/courses/PublishToggle";
+import { ShareOnWebToggle } from "@/components/admin/courses/ShareOnWebToggle";
 import { QuizTab } from "@/components/admin/quiz/QuizTab";
 import { TagInput } from "@/components/admin/courses/TagInput";
 import { FileUploadZone } from "@/components/common/FileUploadZone";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCourse, useStaffUsers, useUpdateCourse } from "@/hooks/useCourses";
+import type { CourseVisibility } from "@/types/course.types";
 import { cn } from "@/lib/utils";
 
 const TAB_VALUES = ["content", "description", "options", "quiz"] as const;
@@ -47,6 +53,9 @@ export function CourseFormPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const [attendeesOpen, setAttendeesOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [emailInfoOpen, setEmailInfoOpen] = useState(false);
+  const [pendingEmailAction, setPendingEmailAction] = useState<"add" | "contact" | null>(null);
+  const [createCourseOpen, setCreateCourseOpen] = useState(false);
 
   useEffect(() => {
     if (!course) return;
@@ -110,6 +119,13 @@ export function CourseFormPage() {
     void saveField({ responsible_user_id: nextId });
   }
 
+  async function saveVisibility(next: CourseVisibility) {
+    if (!course || next === course.visibility) {
+      return;
+    }
+    await saveField({ visibility: next });
+  }
+
   async function saveDescription() {
     if (!course) return;
     const d = description.slice(0, 5000);
@@ -153,9 +169,9 @@ export function CourseFormPage() {
   const saving = updateMutation.isPending;
 
   return (
-    <div className="-mx-6 -mt-6">
-      <header className="sticky top-16 z-20 flex min-h-16 flex-wrap items-center gap-3 border-b border-brand-mid-grey bg-white px-6 py-2">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+    <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
+      <header className="sticky top-16 z-20 flex min-h-16 flex-col gap-3 border-b border-brand-mid-grey bg-white px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:px-6 sm:py-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Link
             to="/admin/dashboard"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-brand-dark-grey hover:bg-brand-light-grey"
@@ -163,6 +179,15 @@ export function CourseFormPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
+          <button
+            type="button"
+            onClick={() => setCreateCourseOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-brand-mid-grey bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-black shadow-sm hover:bg-brand-light-grey sm:px-3"
+            title="Open a new clean course form"
+          >
+            <Plus className="h-4 w-4 shrink-0" aria-hidden />
+            New
+          </button>
           <input
             type="text"
             required
@@ -170,12 +195,13 @@ export function CourseFormPage() {
             onChange={(e) => setHeaderTitle(e.target.value)}
             onBlur={onHeaderTitleBlur}
             disabled={saving}
-            className="min-w-0 flex-1 border-0 bg-transparent text-lg font-semibold text-brand-black outline-none focus:ring-0"
+            className="min-w-0 flex-1 border-0 bg-transparent text-base font-semibold text-brand-black outline-none placeholder:text-brand-mid-grey focus:ring-0 sm:text-lg"
             maxLength={500}
+            placeholder="e.g. Basics of Odoo CRM"
             aria-label="Course title"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 border-t border-brand-mid-grey/60 pt-3 sm:w-auto sm:border-0 sm:pt-0">
           {saving ? (
             <span className="flex items-center gap-1 text-xs text-brand-dark-grey">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -188,6 +214,11 @@ export function CourseFormPage() {
             </span>
           ) : null}
           <PublishToggle courseId={id} isPublished={course.is_published} website={course.website} />
+          <ShareOnWebToggle
+            visibility={course.visibility}
+            disabled={saving}
+            onChange={(next) => void saveVisibility(next)}
+          />
           <button
             type="button"
             className="inline-flex min-h-9 items-center justify-center rounded-md px-3 text-sm font-medium text-primary hover:bg-primary-light"
@@ -197,87 +228,121 @@ export function CourseFormPage() {
           </button>
           <button
             type="button"
-            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium text-primary hover:bg-primary-light"
-            onClick={() => setAttendeesOpen(true)}
+            title="Copy public course link"
+            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-primary hover:bg-primary-light sm:px-3"
+            onClick={() => {
+              const url = `${window.location.origin}/courses/${id}`;
+              void navigator.clipboard.writeText(url).then(() => {
+                toast.success("Course link copied to clipboard.");
+              });
+            }}
           >
-            <UserPlus className="h-4 w-4" />
-            Add Attendees
+            <Share2 className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="hidden sm:inline">Copy link</span>
           </button>
           <button
             type="button"
-            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium text-primary hover:bg-primary-light"
-            onClick={() => setContactOpen(true)}
+            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-primary hover:bg-primary-light sm:px-3"
+            onClick={() => {
+              setPendingEmailAction("add");
+              setEmailInfoOpen(true);
+            }}
+            title="Add attendees"
           >
-            <Mail className="h-4 w-4" />
-            Contact Attendees
+            <UserPlus className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Add Attendees</span>
+            <span className="sm:hidden">Add</span>
+          </button>
+          <button
+            type="button"
+            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-primary hover:bg-primary-light sm:px-3"
+            onClick={() => {
+              setPendingEmailAction("contact");
+              setEmailInfoOpen(true);
+            }}
+            title="Contact attendees"
+          >
+            <Mail className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Contact Attendees</span>
+            <span className="sm:hidden">Email</span>
           </button>
         </div>
       </header>
 
-      <div className="border-b border-brand-mid-grey bg-brand-light-grey px-6 py-4">
-        <FileUploadZone
-          label="Course Cover Image"
-          allowedTypes="image"
-          currentUrl={course.cover_image_url}
-          onUpload={(url) => void saveField({ cover_image_url: url })}
-          onRemove={() => void saveField({ cover_image_url: null })}
-          className="max-w-[800px] mx-auto"
-        />
-      </div>
-
-      <div className="space-y-6 px-6 pb-10 pt-6">
-        <div className="rounded-xl border border-brand-mid-grey bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-          <div className="space-y-4">
-            <div>
-              <span className="mb-1 block text-sm font-medium text-brand-black">Tags</span>
-              <TagInput
-                value={tags}
-                onChange={setTags}
-                onCommit={commitTags}
-                disabled={saving}
-              />
-            </div>
-            <div>
-              <label htmlFor="course-website" className="mb-1 block text-sm font-medium text-brand-black">
-                Website URL
-                {course.is_published ? (
-                  <span className="ml-1 text-status-danger">*</span>
-                ) : null}
-              </label>
-              <input
-                id="course-website"
-                type="url"
-                inputMode="url"
-                placeholder="https://"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                onBlur={onWebsiteBlur}
-                disabled={saving}
-                className="h-10 w-full rounded-md border border-brand-mid-grey px-3 text-sm outline-none ring-primary-light focus:border-primary focus:ring-2"
-              />
-            </div>
-            <div>
-              <label htmlFor="course-responsible" className="mb-1 block text-sm font-medium text-brand-black">
-                Responsible
-              </label>
-              <select
-                id="course-responsible"
-                value={responsibleId}
-                onChange={(e) => onResponsibleChange(e.target.value)}
-                disabled={saving || staffLoading}
-                className="h-10 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-sm outline-none ring-primary-light focus:border-primary focus:ring-2"
-              >
-                <option value="">None</option>
-                {(staffUsers ?? []).map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.full_name} ({u.role})
-                  </option>
-                ))}
-              </select>
+      <div className="border-b border-brand-mid-grey bg-brand-light-grey px-4 py-6 sm:px-6">
+        <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+          {/* Left card: Tags · Website · Responsible */}
+          <div className="rounded-xl border border-brand-mid-grey bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <span className="mb-1 block text-sm font-medium text-brand-black">Tags</span>
+                <TagInput
+                  value={tags}
+                  onChange={setTags}
+                  onCommit={commitTags}
+                  disabled={saving}
+                />
+              </div>
+              <div>
+                <label htmlFor="course-website" className="mb-1 block text-sm font-medium text-brand-black">
+                  Website URL
+                  {course.is_published ? (
+                    <span className="ml-1 text-status-danger">*</span>
+                  ) : null}
+                </label>
+                <input
+                  id="course-website"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  onBlur={onWebsiteBlur}
+                  disabled={saving}
+                  className="h-10 w-full rounded-md border border-brand-mid-grey px-3 text-sm outline-none ring-primary-light focus:border-primary focus:ring-2"
+                />
+              </div>
+              <div>
+                <label htmlFor="course-responsible" className="mb-1 block text-sm font-medium text-brand-black">
+                  Responsible
+                </label>
+                <select
+                  id="course-responsible"
+                  value={responsibleId}
+                  onChange={(e) => onResponsibleChange(e.target.value)}
+                  disabled={saving || staffLoading}
+                  className="h-10 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-sm outline-none ring-primary-light focus:border-primary focus:ring-2"
+                >
+                  <option value="">None</option>
+                  {(staffUsers ?? []).map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.full_name} ({u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
-        </div>
 
+          {/* Right card: Course Image */}
+          <div className="rounded-xl border border-brand-mid-grey bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-6">
+            <span className="mb-2 block text-sm font-medium text-brand-black">Course image</span>
+            <FileUploadZone
+              compact
+              label="Course Cover Image"
+              allowedTypes="image"
+              currentUrl={course.cover_image_url}
+              onUpload={(url) => void saveField({ cover_image_url: url })}
+              onRemove={() => void saveField({ cover_image_url: null })}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+
+
+      <div className="space-y-6 px-4 pb-10 pt-6 sm:px-6">
         <Tabs value={tab} onValueChange={(v) => setTab(normalizeTab(v))} className="w-full">
           <TabsList className="flex w-full flex-wrap justify-start gap-1">
             <TabsTrigger value="content" className="flex-1 sm:flex-none">
@@ -297,7 +362,7 @@ export function CourseFormPage() {
             <LessonList courseId={id} />
           </TabsContent>
           <TabsContent value="description">
-            <div className="rounded-xl border border-brand-mid-grey bg-white p-6">
+            <div className="rounded-xl border border-brand-mid-grey bg-white p-4 sm:p-6">
               <label htmlFor="course-description" className="block text-sm font-medium text-brand-black">
                 Course Description
               </label>
@@ -340,6 +405,25 @@ export function CourseFormPage() {
         </Tabs>
       </div>
 
+      <CreateCourseModal open={createCourseOpen} onOpenChange={setCreateCourseOpen} />
+      <TransactionalEmailInfoDialog
+        open={emailInfoOpen}
+        onOpenChange={(open) => {
+          setEmailInfoOpen(open);
+          if (!open) {
+            setPendingEmailAction(null);
+          }
+        }}
+        onContinue={() => {
+          const next = pendingEmailAction;
+          setPendingEmailAction(null);
+          if (next === "add") {
+            setAttendeesOpen(true);
+          } else if (next === "contact") {
+            setContactOpen(true);
+          }
+        }}
+      />
       <AddAttendeesWizard open={attendeesOpen} onOpenChange={setAttendeesOpen} courseId={id} />
       <ContactAttendeesWizard open={contactOpen} onOpenChange={setContactOpen} courseId={id} />
     </div>

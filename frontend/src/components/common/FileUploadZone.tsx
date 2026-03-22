@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Upload, X, File as FileIcon, CheckCircle2, AlertCircle } from "lucide-react";
+import { resolvePublicFileUrl } from "@/lib/assetUrl";
 import { cn } from "@/lib/utils";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { Progress } from "@/components/ui/progress";
@@ -13,6 +14,8 @@ interface FileUploadZoneProps {
   currentUrl?: string | null;
   className?: string;
   onRemove?: () => void;
+  /** Tighter square-style zone for course cover in a sidebar layout. */
+  compact?: boolean;
 }
 
 export function FileUploadZone({
@@ -23,6 +26,7 @@ export function FileUploadZone({
   currentUrl,
   className,
   onRemove,
+  compact = false,
 }: FileUploadZoneProps) {
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -79,7 +83,10 @@ export function FileUploadZone({
     <div className={cn("w-full", className)}>
       <div
         className={cn(
-          "relative min-h-[160px] flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed transition-all",
+          "relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all",
+          compact
+            ? "aspect-square min-h-[200px] max-h-[280px] w-full max-w-[280px] p-4"
+            : "min-h-[160px] p-6",
           dragActive ? "border-[#1D4ED8] bg-[#EFF6FF]" : "border-[#C5CAD3] bg-white",
           uploading && "pointer-events-none opacity-80",
           !currentUrl && "hover:border-[#1D4ED8] hover:bg-[#F8FAFC] cursor-pointer"
@@ -111,24 +118,33 @@ export function FileUploadZone({
             <p className="text-[12px] text-[#464749]">{progress}% completed</p>
           </div>
         ) : currentUrl ? (
-          <div className="flex items-center gap-4 w-full">
-            <div className="w-12 h-12 rounded-lg bg-[#EFF6FF] flex items-center justify-center shrink-0">
+          <div className={cn("flex w-full items-center gap-3", compact && "flex-col justify-center gap-2")}>
+            <div
+              className={cn(
+                "flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#EFF6FF]",
+                compact ? "h-32 w-32" : "h-12 w-12",
+              )}
+            >
               {allowedTypes === 'image' ? (
-                <img src={currentUrl} className="w-full h-full object-cover rounded-lg" alt="Preview" />
+                <img
+                  src={resolvePublicFileUrl(currentUrl) ?? currentUrl}
+                  className="h-full w-full object-cover"
+                  alt="Preview"
+                />
               ) : (
                 <FileIcon className="w-6 h-6 text-[#1D4ED8]" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-bold text-[#0F172A] truncate">
+            <div className={cn("min-w-0 flex-1", compact && "w-full text-center")}>
+              <p className="truncate text-[14px] font-bold text-[#0F172A]">
                 {currentUrl.split('/').pop()}
               </p>
-              <div className="flex items-center gap-2 mt-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                <span className="text-[12px] text-green-600 font-medium">Uploaded Successfully</span>
+              <div className="mt-1 flex items-center justify-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                <span className="text-[12px] font-medium text-green-600">Uploaded</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className={cn("flex items-center gap-2", compact && "justify-center")}>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}

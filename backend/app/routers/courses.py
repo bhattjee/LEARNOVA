@@ -25,6 +25,8 @@ from app.schemas.course_schema import (
     CourseListResponse,
     CreateCourseRequest,
     PublicCoursesListResponse,
+    PurchaseEnrollmentEnvelope,
+    PurchaseEnrollmentResult,
     UpdateCourseOptions,
     UpdateCourseRequest,
 )
@@ -38,6 +40,7 @@ from app.services.course_service import (
     get_course_detail_for_learner,
     get_courses,
     get_public_courses,
+    purchase_course_enrollment,
     soft_delete_course,
     toggle_publish,
     update_course,
@@ -49,7 +52,9 @@ router = APIRouter()
 StaffUser = Annotated[User, Depends(require_roles(UserRole.ADMIN, UserRole.INSTRUCTOR))]
 AdminUser = Annotated[User, Depends(require_roles(UserRole.ADMIN))]
 OptionalUser = Annotated[User | None, Depends(get_optional_user)]
-LearnerUser = Annotated[User, Depends(require_roles(UserRole.LEARNER))]
+AnyUser = Annotated[
+    User, Depends(require_roles(UserRole.LEARNER, UserRole.ADMIN, UserRole.INSTRUCTOR))
+]
 
 
 @router.get("/public", response_model=PublicCoursesListResponse)
@@ -154,10 +159,21 @@ async def get_course_learner_detail_route(
     return CourseDetailForLearnerEnvelope(data=detail)
 
 
+@router.post("/{course_id}/purchase", response_model=PurchaseEnrollmentEnvelope)
+async def purchase_course_route(
+    course_id: UUID,
+    current_user: AnyUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PurchaseEnrollmentEnvelope:
+    """Record enrollment after (mock) payment — no real gateway integration."""
+    await purchase_course_enrollment(db, course_id, current_user)
+    return PurchaseEnrollmentEnvelope(data=PurchaseEnrollmentResult(enrolled=True))
+
+
 @router.post("/{course_id}/complete", response_model=CompleteCourseEnvelope)
 async def complete_course_route(
     course_id: UUID,
-    current_user: LearnerUser,
+    current_user: AnyUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> CompleteCourseEnvelope:
     result = await complete_course_for_learner(db, course_id, current_user)

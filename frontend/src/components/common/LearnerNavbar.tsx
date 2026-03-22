@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, GraduationCap } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import {
   DropdownMenu,
@@ -21,25 +21,53 @@ function initials(fullName: string): string {
   return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
 }
 
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  cn(
-    "text-sm font-medium transition-colors",
-    isActive
-      ? "border-b-2 border-primary pb-[22px] text-primary"
-      : "border-b-2 border-transparent pb-[22px] text-brand-dark-grey hover:text-brand-black",
-  );
+function navLinkClassForVariant(variant: "default" | "dark") {
+  return ({ isActive }: { isActive: boolean }) =>
+    cn(
+      "text-sm font-medium transition-colors",
+      variant === "dark"
+        ? isActive
+          ? "border-b-2 border-[#9333EA] pb-[22px] text-[#D8B4FE]"
+          : "border-b-2 border-transparent pb-[22px] text-zinc-400 hover:text-white"
+        : isActive
+          ? "border-b-2 border-primary pb-[22px] text-primary"
+          : "border-b-2 border-transparent pb-[22px] text-brand-dark-grey hover:text-brand-black",
+    );
+}
 
-export function LearnerNavbar() {
+export interface LearnerNavbarProps {
+  /** Dark header for learner course detail and similar immersive pages. */
+  variant?: "default" | "dark";
+}
+
+export function LearnerNavbar({ variant = "default" }: LearnerNavbarProps) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const navLinkClass = navLinkClassForVariant(variant);
+  const isDark = variant === "dark";
+
   return (
-    <header className="relative z-40 h-16 w-full border-b border-brand-mid-grey bg-white">
+    <header
+      className={cn(
+        "relative z-40 h-16 w-full border-b",
+        isDark ? "border-zinc-800 bg-[#121212]" : "border-brand-mid-grey bg-white",
+      )}
+    >
       <div className="mx-auto flex h-full max-w-[1400px] items-center px-6">
-        <Link to="/courses" className="flex shrink-0 items-center gap-1.5">
-          <GraduationCap className="h-6 w-6 text-primary" aria-hidden />
-          <span className="text-xl font-bold text-primary">Learnova</span>
+        <Link to="/courses" className="flex shrink-0 items-center gap-2">
+          <img
+            src="/logo.png"
+            alt=""
+            className="h-9 w-auto"
+            decoding="async"
+          />
+          <span
+            className={cn("text-xl font-bold", isDark ? "text-white" : "text-primary")}
+          >
+            Learnova
+          </span>
         </Link>
 
         <nav
@@ -60,18 +88,34 @@ export function LearnerNavbar() {
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none hover:bg-brand-light-grey focus-visible:ring-2 focus-visible:ring-primary-light"
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-light",
+                    isDark ? "hover:bg-zinc-800" : "hover:bg-brand-light-grey",
+                  )}
                 >
                   <span
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-light text-sm font-semibold text-primary"
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold",
+                      isDark
+                        ? "bg-[#9333EA]/30 text-[#E9D5FF]"
+                        : "bg-primary-light text-primary",
+                    )}
                     aria-hidden
                   >
                     {initials(user.full_name)}
                   </span>
-                  <span className="hidden max-w-[140px] truncate text-sm font-medium text-brand-black sm:inline">
+                  <span
+                    className={cn(
+                      "hidden max-w-[140px] truncate text-sm font-medium sm:inline",
+                      isDark ? "text-zinc-100" : "text-brand-black",
+                    )}
+                  >
                     {user.full_name}
                   </span>
-                  <ChevronDown className="h-4 w-4 text-brand-dark-grey" aria-hidden />
+                  <ChevronDown
+                    className={cn("h-4 w-4", isDark ? "text-zinc-400" : "text-brand-dark-grey")}
+                    aria-hidden
+                  />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
@@ -94,13 +138,21 @@ export function LearnerNavbar() {
             <>
               <Link
                 to="/login"
-                className="inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium text-primary hover:bg-primary-light"
+                className={cn(
+                  "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium",
+                  isDark
+                    ? "text-zinc-200 hover:bg-zinc-800"
+                    : "text-primary hover:bg-primary-light",
+                )}
               >
                 Sign In
               </Link>
               <Link
                 to="/register"
-                className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+                className={cn(
+                  "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium text-white transition-colors",
+                  isDark ? "bg-[#9333EA] hover:bg-[#7C3AED]" : "bg-primary hover:bg-primary-hover",
+                )}
               >
                 Get Started
               </Link>

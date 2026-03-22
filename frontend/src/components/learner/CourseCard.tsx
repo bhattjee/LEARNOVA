@@ -1,8 +1,15 @@
 import { Clock, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { resolvePublicFileUrl } from "@/lib/assetUrl";
 import { cn } from "@/lib/utils";
-import { resolveLearnerCourseCta } from "@/lib/learnerCourseCta";
+import { formatInr, resolveLearnerCourseCta } from "@/lib/learnerCourseCta";
 import type { LearnerCourseItem, PublicCourseItem } from "@/types/course.types";
+
+function isLearnerEnrolled(
+  status: PublicCourseItem["learner_status"],
+): boolean {
+  return status === "enrolled" || status === "in_progress" || status === "completed";
+}
 
 function formatDuration(totalSeconds: number): string {
   if (totalSeconds <= 0) {
@@ -20,9 +27,18 @@ function formatDuration(totalSeconds: number): string {
 export interface LearnerCourseCardProps {
   course: PublicCourseItem | LearnerCourseItem;
   isAuthenticated: boolean;
+  /** When set, primary actions navigate here instead of course detail (showcase / demo cards). */
+  showcaseDestination?: string;
+  /** Opens mock checkout for paid courses instead of navigating away. */
+  onPaidCheckout?: (course: PublicCourseItem | LearnerCourseItem) => void;
 }
 
-export function LearnerCourseCard({ course, isAuthenticated }: LearnerCourseCardProps) {
+export function LearnerCourseCard({
+  course,
+  isAuthenticated,
+  showcaseDestination,
+  onPaidCheckout,
+}: LearnerCourseCardProps) {
   const navigate = useNavigate();
   const detailPath = `/courses/${course.id}`;
   const status = course.learner_status;
@@ -39,6 +55,10 @@ export function LearnerCourseCard({ course, isAuthenticated }: LearnerCourseCard
   });
 
   function runCta() {
+    if (showcaseDestination) {
+      navigate(showcaseDestination);
+      return;
+    }
     if (cta.kind === "link") {
       navigate(cta.to);
       return;
@@ -49,27 +69,58 @@ export function LearnerCourseCard({ course, isAuthenticated }: LearnerCourseCard
     navigate(detailPath);
   }
 
-  return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-brand-mid-grey bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-      <div
-        className={cn(
-          "h-40 w-full bg-cover bg-center",
-          !course.cover_image_url && "bg-brand-light-grey",
-        )}
-        style={
-          course.cover_image_url
-            ? { backgroundImage: `url(${course.cover_image_url})` }
-            : undefined
-        }
-      />
+  const enrolled = isLearnerEnrolled(status);
+  const showPaidRibbon =
+    course.access_rule === "on_payment" &&
+    course.price_cents != null &&
+    course.price_cents > 0 &&
+    !enrolled;
 
-      <div className="flex flex-1 flex-col p-4">
+  const openMockCheckout =
+    Boolean(onPaidCheckout) &&
+    isAuthenticated &&
+    course.access_rule === "on_payment" &&
+    !enrolled &&
+    !showcaseDestination;
+
+  function onPrimaryAction() {
+    if (openMockCheckout && onPaidCheckout) {
+      onPaidCheckout(course);
+      return;
+    }
+    runCta();
+  }
+
+  const coverUrl = resolvePublicFileUrl(course.cover_image_url);
+
+  return (
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-brand-mid-grey/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_12px_40px_rgba(15,23,42,0.1)]">
+      <div className="relative">
+        <div
+          className={cn(
+            "h-44 w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.02]",
+            !coverUrl && "bg-gradient-to-br from-primary-light to-brand-light-grey",
+          )}
+          style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"
+          aria-hidden
+        />
+        {showPaidRibbon ? (
+          <span className="absolute right-3 top-3 rounded-md bg-status-success px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm">
+            Paid
+          </span>
+        ) : null}
+      </div>
+
+      <div className="flex flex-1 flex-col p-5">
         {course.tags.length > 0 ? (
           <div className="mb-2 flex flex-wrap gap-1.5">
             {course.tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-primary-light px-2 py-0.5 text-xs font-medium text-primary"
+                className="rounded-full bg-[#F5F0FF] px-2.5 py-0.5 text-xs font-semibold text-status-purple"
               >
                 {tag}
               </span>
@@ -105,20 +156,41 @@ export function LearnerCourseCard({ course, isAuthenticated }: LearnerCourseCard
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-brand-light-grey">
               <div
-                className="h-full rounded-full bg-primary transition-all"
+                className="h-full rounded-full bg-gradient-to-r from-primary to-status-purple transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
           </div>
         ) : null}
 
+        {course.access_rule === "on_payment" && course.price_cents != null && !enrolled ? (
+          <p className="mt-3 text-right text-sm font-bold text-brand-black">
+            INR {formatInr(course.price_cents)}
+          </p>
+        ) : null}
+
         <div className="mt-4 mt-auto pt-1">
           {cta.kind === "link" ? (
-            <Link to={cta.to} className={cn(cta.className, "w-full")}>
+            <Link
+              to={showcaseDestination ?? cta.to}
+              className={cn(cta.className, "w-full rounded-xl")}
+            >
               {cta.label}
             </Link>
           ) : (
-            <button type="button" className={cn(cta.className, "w-full")} disabled={cta.disabled} onClick={runCta}>
+            <button
+              type="button"
+              className={cn(
+                cta.className,
+                "w-full rounded-xl",
+                cta.label.startsWith("Continue") &&
+                  "border-status-purple bg-white text-status-purple hover:bg-[#F5F0FF]",
+                cta.label.includes("Buy Course") &&
+                  "bg-status-purple text-white hover:bg-status-purple/90 hover:opacity-95",
+              )}
+              disabled={cta.disabled}
+              onClick={onPrimaryAction}
+            >
               {cta.label}
             </button>
           )}

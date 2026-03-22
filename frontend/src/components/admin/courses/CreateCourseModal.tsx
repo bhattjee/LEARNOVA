@@ -53,7 +53,7 @@ export function CreateCourseModal({ open, onOpenChange }: CreateCourseModalProps
       <DialogContent className="sm:max-w-[480px]">
         <form onSubmit={onSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Course</DialogTitle>
+            <DialogTitle>Create Course</DialogTitle>
           </DialogHeader>
           <div className="py-2">
             <label htmlFor="new-course-title" className="sr-only">

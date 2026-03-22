@@ -1,10 +1,17 @@
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 import * as authService from "@/services/authService";
 import type { UserRole } from "@/types/auth.types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface LoginPageProps {}
 
@@ -17,12 +24,15 @@ function roleHome(role: UserRole): string {
 
 export function LoginPage(_props: LoginPageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const loginStore = useAuthStore((s) => s.login);
+  const fromPath = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forgotInfoOpen, setForgotInfoOpen] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -32,7 +42,8 @@ export function LoginPage(_props: LoginPageProps) {
       const res = await authService.login({ email: email.trim(), password });
       loginStore(res.access_token, res.user);
       toast.success("Welcome back!");
-      navigate(roleHome(res.user.role), { replace: true });
+      const destination = fromPath && fromPath !== "/login" ? fromPath : roleHome(res.user.role);
+      navigate(destination, { replace: true });
     } catch {
       setError("Invalid email or password");
     } finally {
@@ -43,12 +54,19 @@ export function LoginPage(_props: LoginPageProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-light-grey px-4 py-10">
       <div
-        className="w-full max-w-[440px] rounded-xl border border-brand-mid-grey bg-white p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+        className="w-full max-w-[480px] rounded-xl border border-brand-mid-grey bg-white p-10 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
       >
-        <h1 className="text-center text-2xl font-bold text-primary">Learnova</h1>
-        <p className="mt-2 text-center text-sm text-brand-dark-grey">
-          Sign in to your account
-        </p>
+        <div className="flex flex-col items-center">
+          <img
+            src="/logo.png"
+            alt="Learnova"
+            className="h-12 w-auto"
+            decoding="async"
+          />
+          <p className="mt-3 text-center text-sm text-brand-dark-grey">
+            Sign in to your account
+          </p>
+        </div>
 
         <form className="mt-8 space-y-4" onSubmit={onSubmit}>
           <div>
@@ -63,7 +81,7 @@ export function LoginPage(_props: LoginPageProps) {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-10 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-sm text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
+              className="h-11 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-base text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
             />
           </div>
           <div className="relative">
@@ -78,7 +96,7 @@ export function LoginPage(_props: LoginPageProps) {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-10 w-full rounded-md border border-brand-mid-grey bg-white px-3 pr-10 text-sm text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
+              className="h-11 w-full rounded-md border border-brand-mid-grey bg-white px-3 pr-10 text-base text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
             />
             <button
               type="button"
@@ -87,6 +105,16 @@ export function LoginPage(_props: LoginPageProps) {
               onClick={() => setShowPassword((v) => !v)}
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setForgotInfoOpen(true)}
+              className="text-sm font-medium text-primary hover:text-primary-hover"
+            >
+              Forgot password?
             </button>
           </div>
 
@@ -99,7 +127,7 @@ export function LoginPage(_props: LoginPageProps) {
           <button
             type="submit"
             disabled={loading}
-            className="flex h-9 w-full items-center justify-center rounded-md bg-primary text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+            className="flex h-11 w-full items-center justify-center rounded-md bg-primary text-base font-bold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
           >
             {loading ? (
               <>
@@ -118,6 +146,19 @@ export function LoginPage(_props: LoginPageProps) {
             Register
           </Link>
         </p>
+
+        <Dialog open={forgotInfoOpen} onOpenChange={setForgotInfoOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Forgot your password?</DialogTitle>
+              <DialogDescription className="pt-2 text-left text-brand-dark-grey">
+                Password recovery is not available from this screen. If you cannot sign in, ask your
+                instructor or an organization administrator to help reset your account or create a new
+                password for you.
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

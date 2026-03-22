@@ -3,11 +3,18 @@ import { BookOpen, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { LearnerNavbar } from "@/components/common/LearnerNavbar";
 import { LearnerCourseCard } from "@/components/learner/CourseCard";
+import { PaidCourseCheckoutModal } from "@/components/learner/PaidCourseCheckoutModal";
 import { usePublicCourses } from "@/hooks/useLearnerCatalog";
 import { useAuthStore } from "@/stores/authStore";
+import type { PublicCourseItem } from "@/types/course.types";
 
 export function CourseCatalogPage() {
   const [search, setSearch] = useState("");
+  const [checkout, setCheckout] = useState<{
+    id: string;
+    title: string;
+    priceCents: number | null;
+  } | null>(null);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { data, isLoading, isError } = usePublicCourses(search);
 
@@ -78,11 +85,37 @@ export function CourseCatalogPage() {
         {!isLoading && !isError && courses.length > 0 ? (
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {courses.map((c) => (
-              <LearnerCourseCard key={c.id} course={c} isAuthenticated={isAuthenticated} />
+              <LearnerCourseCard
+                key={c.id}
+                course={c}
+                isAuthenticated={isAuthenticated}
+                onPaidCheckout={
+                  isAuthenticated
+                    ? (course: PublicCourseItem) =>
+                        setCheckout({
+                          id: course.id,
+                          title: course.title,
+                          priceCents: course.price_cents ?? null,
+                        })
+                    : undefined
+                }
+              />
             ))}
           </div>
         ) : null}
       </main>
+
+      <PaidCourseCheckoutModal
+        open={checkout !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCheckout(null);
+          }
+        }}
+        courseId={checkout?.id ?? null}
+        courseTitle={checkout?.title ?? ""}
+        priceCents={checkout?.priceCents ?? null}
+      />
     </div>
   );
 }

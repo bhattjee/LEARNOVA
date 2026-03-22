@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="images/logo.svg" />
+    <link rel="apple-touch-icon" href="images/logo.png" />
     <title>Privacy Policy - Learnova</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -25,9 +28,7 @@
 <body class="bg-white text-dark-gray font-sans">
     <nav class="sticky top-0 z-50 bg-white border-b border-light-gray h-16 flex justify-between items-center px-8 shadow-sm">
         <a href="index.html" class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <i data-lucide="graduation-cap" class="text-white w-5 h-5"></i>
-            </div>
+            <img src="images/logo.png" alt="" class="h-8 w-auto rounded-md" />
             <span class="text-xl font-bold text-primary">Learnova</span>
         </a>
         <div class="flex space-x-8 text-sm font-medium">
@@ -36,7 +37,7 @@
             <a href="about.html" class="hover:text-primary transition-all">About Us</a>
             <a href="privacy.html" class="text-primary font-bold">Privacy Policy</a>
         </div>
-        <button class="bg-primary text-white px-6 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 transition-all">Login</button>
+        <button type="button" data-learnova="login" class="bg-primary text-white px-6 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 transition-all">Login</button>
     </nav>
 
     <main class="max-w-4xl mx-auto px-4 py-20">
@@ -55,6 +56,7 @@
     <footer class="bg-dark-gray text-white py-12 text-center text-xs text-gray-500">
         © 2024 Learnova Inc. All rights reserved.
     </footer>
+    <script src="js/app-links.js"></script>
     <script>lucide.createIcons();</script>
 </body>
 </html>

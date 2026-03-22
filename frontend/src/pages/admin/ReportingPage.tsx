@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Columns2, Users, X } from "lucide-react";
+import { BarChart2, BookOpen, ChevronLeft, ChevronRight, Columns2, ExternalLink, Users, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { formatDurationShort } from "@/lib/formatDuration";
 import { cn } from "@/lib/utils";
+import { useGetCourses } from "@/hooks/useCourses";
 import { useReporting } from "@/hooks/useReporting";
 import type { ReportingRowStatus, ReportingStatusFilter } from "@/types/reporting.types";
 
@@ -77,17 +79,26 @@ const PAGE_SIZE = 20;
 
 export function ReportingPage() {
   const [statusFilter, setStatusFilter] = useState<ReportingStatusFilter>("all");
+  const [courseFilterId, setCourseFilterId] = useState<string>("");
   const [page, setPage] = useState(1);
   const [panelOpen, setPanelOpen] = useState(false);
   const [cols, setCols] = useState<ColumnVisibility>(() =>
     typeof window !== "undefined" ? loadColumnVisibility() : DEFAULT_VISIBILITY,
   );
 
-  const { data, isLoading, isError } = useReporting(statusFilter, page, PAGE_SIZE);
+  const { data: coursesData } = useGetCourses("", 1, 250);
+  const courseList = coursesData?.data ?? [];
+
+  const { data, isLoading, isError } = useReporting(
+    statusFilter,
+    page,
+    PAGE_SIZE,
+    courseFilterId || undefined,
+  );
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter]);
+  }, [statusFilter, courseFilterId]);
 
   const totalPages = useMemo(() => {
     if (!data) return 1;
@@ -120,29 +131,7 @@ export function ReportingPage() {
           ? "In Progress"
           : "Completed";
 
-  if (isLoading && !data) {
-    return (
-      <div className="space-y-6 pb-10">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-lg border border-brand-mid-grey bg-white p-5 shadow-sm">
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          ))}
-        </div>
-        <div className="overflow-x-auto rounded-xl border border-brand-mid-grey bg-white shadow-sm">
-           <div className="p-4 space-y-4">
-              {[...Array(8)].map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isError || !data) {
+  if (isError) {
     return (
       <p className="text-sm text-status-danger" role="alert">
         Could not load reporting data.
@@ -150,65 +139,153 @@ export function ReportingPage() {
     );
   }
 
-  const { overview, rows, total } = data;
-  const noParticipants = overview.total_participants === 0;
+  if (!isLoading && !data) {
+    return (
+      <p className="text-sm text-status-danger" role="alert">
+        Could not load reporting data.
+      </p>
+    );
+  }
+
+  const overview = data?.overview;
+  const rows = data?.rows ?? [];
+  const total = data?.total ?? 0;
+  const noParticipants = overview ? overview.total_participants === 0 : true;
+
+  const selectedCourseTitle = courseFilterId
+    ? courseList.find((c) => c.id === courseFilterId)?.title
+    : null;
 
   return (
     <div className="space-y-6 pb-10">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-2xl border border-brand-mid-grey bg-gradient-to-br from-primary-light/40 via-white to-brand-light-grey/80 p-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="mb-3 flex items-center gap-3 lg:mb-0">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md">
+              <BarChart2 className="h-6 w-6" aria-hidden />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold text-brand-black">Course reporting</h2>
+              <p className="mt-1 max-w-2xl text-sm text-brand-dark-grey">
+                Learner progress across your courses. Filter by a single course to see enrollment and completion
+                for that course only (course-wise reporting).
+              </p>
+            </div>
+          </div>
+          <div className="flex w-full min-w-0 flex-col gap-2 sm:max-w-md lg:w-auto lg:min-w-[280px]">
+            <label htmlFor="reporting-course-filter" className="text-xs font-semibold uppercase tracking-wide text-brand-dark-grey">
+              Course scope
+            </label>
+            <select
+              id="reporting-course-filter"
+              value={courseFilterId}
+              onChange={(e) => setCourseFilterId(e.target.value)}
+              className="h-11 w-full rounded-lg border border-brand-mid-grey bg-white px-3 text-sm text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
+            >
+              <option value="">All courses</option>
+              {courseList.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+            {courseFilterId ? (
+              <Link
+                to={`/admin/courses/${courseFilterId}/edit`}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+              >
+                <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
+                Open course editor
+                <ExternalLink className="h-3.5 w-3.5 opacity-70" aria-hidden />
+              </Link>
+            ) : null}
+          </div>
+        </div>
+        {courseFilterId && selectedCourseTitle ? (
+          <p className="mt-4 border-t border-brand-mid-grey/80 pt-4 text-sm text-brand-dark-grey">
+            Showing data for: <span className="font-semibold text-brand-black">{selectedCourseTitle}</span>
+          </p>
+        ) : null}
+      </div>
+
+      {isLoading && !data ? (
+        <>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="rounded-lg border border-brand-mid-grey bg-white p-4 shadow-sm sm:p-5">
+                <Skeleton className="mb-2 h-8 w-16" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))}
+          </div>
+          <div className="overflow-x-auto rounded-xl border border-brand-mid-grey bg-white shadow-sm">
+            <div className="space-y-4 p-4">
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {!isLoading && data ? (
+        <>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <button
           type="button"
           onClick={() => setStatusFilter("all")}
           className={cn(
-            "rounded-lg border bg-white p-5 text-left shadow-sm transition-all",
+            "rounded-lg border bg-white p-4 text-left shadow-sm transition-all sm:p-5",
             "border-l-4 border-l-primary",
             statusFilter === "all" ? "border-2 border-primary bg-primary/10 ring-2 ring-primary/20" : "border-brand-mid-grey",
           )}
         >
-          <p className="text-[28px] font-bold leading-tight text-[#0F172A]">{overview.total_participants}</p>
-          <p className="mt-1 text-[13px] text-[#464749]">Total Participants</p>
+          <p className="text-2xl font-bold leading-tight text-[#0F172A] sm:text-[28px]">
+            {overview?.total_participants ?? 0}
+          </p>
+          <p className="mt-1 text-xs text-[#464749] sm:text-[13px]">Total Participants</p>
         </button>
         <button
           type="button"
           onClick={() => setStatusFilter("not_started")}
           className={cn(
-            "rounded-lg border bg-white p-5 text-left shadow-sm transition-all",
+            "rounded-lg border bg-white p-4 text-left shadow-sm transition-all sm:p-5",
             "border-l-4 border-l-slate-400",
             statusFilter === "not_started"
               ? "border-2 border-slate-400 bg-slate-100/80 ring-2 ring-slate-300"
               : "border-brand-mid-grey",
           )}
         >
-          <p className="text-[28px] font-bold leading-tight text-[#0F172A]">{overview.yet_to_start}</p>
-          <p className="mt-1 text-[13px] text-[#464749]">Yet to Start</p>
+          <p className="text-2xl font-bold leading-tight text-[#0F172A] sm:text-[28px]">{overview?.yet_to_start ?? 0}</p>
+          <p className="mt-1 text-xs text-[#464749] sm:text-[13px]">Yet to Start</p>
         </button>
         <button
           type="button"
           onClick={() => setStatusFilter("in_progress")}
           className={cn(
-            "rounded-lg border bg-white p-5 text-left shadow-sm transition-all",
+            "rounded-lg border bg-white p-4 text-left shadow-sm transition-all sm:p-5",
             "border-l-4 border-l-[#F5AA29]",
             statusFilter === "in_progress"
               ? "border-2 border-[#F5AA29] bg-[#F5AA29]/15 ring-2 ring-[#F5AA29]/30"
               : "border-brand-mid-grey",
           )}
         >
-          <p className="text-[28px] font-bold leading-tight text-[#0F172A]">{overview.in_progress}</p>
-          <p className="mt-1 text-[13px] text-[#464749]">In Progress</p>
+          <p className="text-2xl font-bold leading-tight text-[#0F172A] sm:text-[28px]">{overview?.in_progress ?? 0}</p>
+          <p className="mt-1 text-xs text-[#464749] sm:text-[13px]">In Progress</p>
         </button>
         <button
           type="button"
           onClick={() => setStatusFilter("completed")}
           className={cn(
-            "rounded-lg border bg-white p-5 text-left shadow-sm transition-all",
+            "rounded-lg border bg-white p-4 text-left shadow-sm transition-all sm:p-5",
             "border-l-4 border-l-[#058E61]",
             statusFilter === "completed"
               ? "border-2 border-[#058E61] bg-[#058E61]/10 ring-2 ring-[#058E61]/25"
               : "border-brand-mid-grey",
           )}
         >
-          <p className="text-[28px] font-bold leading-tight text-[#0F172A]">{overview.completed}</p>
-          <p className="mt-1 text-[13px] text-[#464749]">Completed</p>
+          <p className="text-2xl font-bold leading-tight text-[#0F172A] sm:text-[28px]">{overview?.completed ?? 0}</p>
+          <p className="mt-1 text-xs text-[#464749] sm:text-[13px]">Completed</p>
         </button>
       </div>
 
@@ -352,6 +429,8 @@ export function ReportingPage() {
           </p>
         </div>
       )}
+        </>
+      ) : null}
 
       {panelOpen ? (
         <>

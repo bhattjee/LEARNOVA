@@ -164,6 +164,14 @@ class CompleteCourseEnvelope(BaseModel):
     data: CompleteCourseResult
 
 
+class PurchaseEnrollmentResult(BaseModel):
+    enrolled: bool
+
+
+class PurchaseEnrollmentEnvelope(BaseModel):
+    data: PurchaseEnrollmentResult
+
+
 class UpdateCourseRequest(BaseModel):
     title: Annotated[str | None, Field(None, min_length=1, max_length=500)] = None
     tags: list[str] | None = None
@@ -173,6 +181,7 @@ class UpdateCourseRequest(BaseModel):
     access_rule: CourseAccessRule | None = None
     price_cents: int | None = None
     description: Annotated[str | None, Field(None, max_length=5000)] = None
+    cover_image_url: Annotated[str | None, Field(None, max_length=500)] = None
 
     @field_validator("description")
     @classmethod
@@ -180,6 +189,14 @@ class UpdateCourseRequest(BaseModel):
         if value is None:
             return None
         return value.strip() or None
+
+    @field_validator("cover_image_url")
+    @classmethod
+    def strip_cover_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        s = value.strip()
+        return s if s else None
 
 
 class UsersListResponse(BaseModel):

@@ -386,7 +386,7 @@ export function QuizBuilderPage() {
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
-        <aside className="w-full shrink-0 rounded-xl border border-brand-mid-grey bg-white p-4 shadow-sm lg:sticky lg:top-4 lg:w-[280px]">
+        <aside className="w-full shrink-0 rounded-xl border border-brand-mid-grey bg-white p-4 shadow-sm lg:sticky lg:top-[5.5rem] lg:w-[280px] lg:self-start">
           <h3 className="mb-3 text-sm font-semibold text-brand-black">Questions</h3>
           <div className="max-h-[50vh] space-y-1 overflow-y-auto lg:max-h-[calc(100vh-16rem)]">
             {questions.length === 0 ? (

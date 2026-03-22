@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   BookOpen,
   FileText,
-  GripVertical,
   HelpCircle,
   ImageIcon,
   MoreVertical,
@@ -40,7 +39,7 @@ function TypeIcon({ type }: { type: LessonType }) {
   return <ImageIcon className={cls} aria-hidden />;
 }
 
-function LessonRow({
+function LessonTableRow({
   lesson,
   onEdit,
   onDeleteRequest,
@@ -50,38 +49,41 @@ function LessonRow({
   onDeleteRequest: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 border-b border-brand-mid-grey py-3 last:border-b-0">
-      <div className="flex h-9 w-8 shrink-0 items-center justify-center text-brand-mid-grey" title="Reorder (Phase 16)">
-        <GripVertical className="h-5 w-5" aria-hidden />
-      </div>
-      <TypeIcon type={lesson.type} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-brand-black">{lesson.title}</p>
-      </div>
-      <span className="shrink-0 rounded-full bg-brand-light-grey px-2 py-0.5 text-xs text-brand-dark-grey">
-        {TYPE_LABEL[lesson.type]}
-      </span>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-brand-dark-grey hover:bg-brand-light-grey"
-            aria-label="Lesson actions"
-          >
-            <MoreVertical className="h-5 w-5" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-status-danger focus:text-status-danger"
-            onClick={onDeleteRequest}
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <tr className="border-b border-brand-mid-grey last:border-b-0">
+      <td className="px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <TypeIcon type={lesson.type} />
+          <span className="truncate text-sm font-medium text-brand-black">{lesson.title}</span>
+        </div>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3">
+        <span className="inline-flex rounded-full bg-brand-light-grey px-2.5 py-0.5 text-xs font-medium text-brand-dark-grey">
+          {TYPE_LABEL[lesson.type]}
+        </span>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3 text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-brand-dark-grey hover:bg-brand-light-grey"
+              aria-label="Lesson actions"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-status-danger focus:text-status-danger"
+              onClick={onDeleteRequest}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </td>
+    </tr>
   );
 }
 
@@ -132,21 +134,42 @@ export function LessonList({ courseId }: LessonListProps) {
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-brand-mid-grey bg-brand-light-grey px-6 py-14 text-center">
           <BookOpen className="h-14 w-14 text-brand-mid-grey opacity-70" aria-hidden />
           <p className="max-w-sm text-sm text-brand-dark-grey">
-            No lessons yet. Click &quot;Add Content&quot; to start.
+            No lessons yet. Use Add Content below to start.
           </p>
         </div>
       ) : (
-        <div>
-          {lessons.map((lesson) => (
-            <LessonRow
-              key={lesson.id}
-              lesson={lesson}
-              onEdit={() => openEdit(lesson.id)}
-              onDeleteRequest={() => setDeleteId(lesson.id)}
-            />
-          ))}
+        <div className="max-h-[min(480px,55vh)] overflow-auto rounded-lg border border-brand-mid-grey">
+          <table className="w-full min-w-[520px] border-collapse text-left text-sm">
+            <thead className="sticky top-0 z-10 bg-[#F3F4F6]">
+              <tr className="text-xs font-semibold uppercase tracking-wide text-brand-dark-grey">
+                <th className="px-4 py-3">Content title</th>
+                <th className="whitespace-nowrap px-4 py-3">Category</th>
+                <th className="w-14 px-4 py-3 text-right" aria-label="Actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {lessons.map((lesson) => (
+                <LessonTableRow
+                  key={lesson.id}
+                  lesson={lesson}
+                  onEdit={() => openEdit(lesson.id)}
+                  onDeleteRequest={() => setDeleteId(lesson.id)}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
+
+      <div className="mt-6 flex justify-center border-t border-brand-mid-grey/80 pt-6">
+        <button
+          type="button"
+          onClick={openAdd}
+          className="inline-flex min-h-11 w-full max-w-md items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover sm:text-base"
+        >
+          Add content
+        </button>
+      </div>
 
       <LessonEditorModal
         open={editorOpen}

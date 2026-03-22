@@ -183,8 +183,8 @@ async def add_attendees(
             + ", ".join(staff_emails),
         )
 
-    added = 0
-    already_enrolled = 0
+    added: int = 0
+    already_enrolled: int = 0
     for e, u in resolved:
         learner = u
         if learner is None:
@@ -499,6 +499,9 @@ async def update_course(
         course.price_cents = payload["price_cents"]
     if "description" in payload:
         course.description = payload["description"]
+    if "cover_image_url" in payload:
+        v = payload["cover_image_url"]
+        course.cover_image_url = None if v is None else (str(v).strip() or None)
     await db.commit()
     await db.refresh(course)
     return await course_to_detail(db, course)
@@ -586,11 +589,23 @@ async def get_course_detail_for_learner(
         select(Course).where(
             Course.id == course_id,
             Course.deleted_at.is_(None),
-            Course.is_published.is_(True),
         ),
     )
     course = result.scalar_one_or_none()
     if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+
+    can_preview_draft = False
+    if current_user is not None:
+        if current_user.role == UserRole.ADMIN:
+            can_preview_draft = True
+        elif current_user.role == UserRole.INSTRUCTOR and course.created_by == current_user.id:
+            can_preview_draft = True
+
+    if not course.is_published and not can_preview_draft:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
@@ -641,7 +656,7 @@ async def get_course_detail_for_learner(
         has_att = {row[0] for row in ar.all()}
 
     items: list[LessonProgressItem] = []
-    completed = 0
+    completed: int = 0
     for les in lessons:
         st = _lesson_row_status_from_progress(progress_by_lesson.get(les.id))
         if st == "completed":
@@ -874,17 +889,59 @@ async def get_my_courses(
     return items
 
 
+async def purchase_course_enrollment(
+    db: AsyncSession,
+    course_id: uuid.UUID,
+    user: User,
+) -> None:
+    """
+    Create an enrollment for a published paid course after a successful (mock) checkout.
+    Admins and instructors may also enroll in unpublished courses for preview purposes.
+    Idempotent if already enrolled.
+    """
+    filters = [Course.id == course_id, Course.deleted_at.is_(None)]
+    # Learners can only purchase published courses; staff can enroll in any course
+    if user.role == UserRole.LEARNER:
+        filters.append(Course.is_published.is_(True))
+    result = await db.execute(
+        select(Course).where(*filters),
+    )
+    course = result.scalar_one_or_none()
+    if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+    if course.access_rule != CourseAccessRule.ON_PAYMENT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This course does not require purchase",
+        )
+    existing = await db.scalar(
+        select(Enrollment.id).where(
+            Enrollment.user_id == user.id,
+            Enrollment.course_id == course_id,
+        ),
+    )
+    if existing is not None:
+        return
+    db.add(
+        Enrollment(
+            user_id=user.id,
+            course_id=course_id,
+            enrolled_by=None,
+            status=EnrollmentStatus.ENROLLED,
+        ),
+    )
+    await db.commit()
+
+
 async def complete_course_for_learner(
     db: AsyncSession,
     course_id: uuid.UUID,
     user: User,
 ) -> CompleteCourseResult:
     """Mark the learner's enrollment as completed (idempotent if already completed)."""
-    if user.role != UserRole.LEARNER:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Learner access only",
-        )
     c_row = await db.execute(
         select(Course).where(Course.id == course_id, Course.deleted_at.is_(None)),
     )

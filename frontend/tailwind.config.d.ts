@@ -33,6 +33,9 @@ declare const _default: {
                 lg: string;
                 xl: string;
             };
+            fontWeight: {
+                medium: string;
+            };
         };
     };
     plugins: ({

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 import * as authService from "@/services/authService";
 import type { UserRole } from "@/types/auth.types";
+import { getSignupEmailDomainError } from "@/lib/allowedEmailDomains";
 
 interface RegisterPageProps {}
 
@@ -14,6 +15,23 @@ function roleHome(role: UserRole): string {
     return "/admin/dashboard";
   }
   return "/my-courses";
+}
+
+/** Returns an error message if the password does not meet policy; otherwise null. */
+function validatePasswordStrength(password: string): string | null {
+  if (password.length < 8) {
+    return "Password must be at least 8 characters long.";
+  }
+  if (!/[a-z]/.test(password)) {
+    return "Password must include at least one lowercase letter.";
+  }
+  if (!/[A-Z]/.test(password)) {
+    return "Password must include at least one uppercase letter.";
+  }
+  if (!/[0-9]/.test(password)) {
+    return "Password must include at least one number.";
+  }
+  return null;
 }
 
 export function RegisterPage(_props: RegisterPageProps) {
@@ -31,8 +49,14 @@ export function RegisterPage(_props: RegisterPageProps) {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+    const emailDomainError = getSignupEmailDomainError(email);
+    if (emailDomainError) {
+      setError(emailDomainError);
+      return;
+    }
+    const passwordError = validatePasswordStrength(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     if (password !== confirmPassword) {
@@ -75,12 +99,19 @@ export function RegisterPage(_props: RegisterPageProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-light-grey px-4 py-10">
       <div
-        className="w-full max-w-[440px] rounded-xl border border-brand-mid-grey bg-white p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+        className="w-full max-w-[480px] rounded-xl border border-brand-mid-grey bg-white p-10 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
       >
-        <h1 className="text-center text-2xl font-bold text-primary">Learnova</h1>
-        <p className="mt-2 text-center text-sm text-brand-dark-grey">
-          Create your account
-        </p>
+        <div className="flex flex-col items-center">
+          <img
+            src="/logo.png"
+            alt="Learnova"
+            className="h-12 w-auto"
+            decoding="async"
+          />
+          <p className="mt-3 text-center text-sm text-brand-dark-grey">
+            Create your account
+          </p>
+        </div>
 
         <form className="mt-8 space-y-4" onSubmit={onSubmit}>
           <div>
@@ -95,7 +126,7 @@ export function RegisterPage(_props: RegisterPageProps) {
               placeholder="Full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="h-10 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-sm text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
+              className="h-11 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-base text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
             />
           </div>
           <div>
@@ -110,31 +141,41 @@ export function RegisterPage(_props: RegisterPageProps) {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-10 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-sm text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
+              aria-describedby="reg-email-hint"
+              className="h-11 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-base text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
             />
+            <p id="reg-email-hint" className="mt-1.5 text-xs text-brand-dark-grey">
+              Use a common provider address (Gmail, Outlook, Yahoo, iCloud, Proton, etc.).
+            </p>
           </div>
-          <div className="relative">
-            <label htmlFor="reg-password" className="sr-only">
-              Password
-            </label>
-            <input
-              id="reg-password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
-              required
-              placeholder="Password (min 8 characters)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-10 w-full rounded-md border border-brand-mid-grey bg-white px-3 pr-10 text-sm text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
-            />
-            <button
-              type="button"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-dark-grey hover:text-brand-black"
-              onClick={() => setShowPassword((v) => !v)}
-            >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
+          <div>
+            <div className="relative">
+              <label htmlFor="reg-password" className="sr-only">
+                Password
+              </label>
+              <input
+                id="reg-password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                aria-describedby="reg-password-hint"
+                className="h-11 w-full rounded-md border border-brand-mid-grey bg-white px-3 pr-10 text-base text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-dark-grey hover:text-brand-black"
+                onClick={() => setShowPassword((v) => !v)}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            <p id="reg-password-hint" className="mt-1.5 text-xs text-brand-dark-grey">
+              At least 8 characters, including 1 uppercase letter, 1 lowercase letter, and 1 number.
+            </p>
           </div>
           <div>
             <label htmlFor="reg-confirm" className="sr-only">
@@ -148,7 +189,7 @@ export function RegisterPage(_props: RegisterPageProps) {
               placeholder="Confirm password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="h-10 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-sm text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
+              className="h-11 w-full rounded-md border border-brand-mid-grey bg-white px-3 text-base text-brand-black outline-none ring-primary-light focus:border-primary focus:ring-2"
             />
           </div>
 
@@ -185,7 +226,7 @@ export function RegisterPage(_props: RegisterPageProps) {
           <button
             type="submit"
             disabled={loading}
-            className="flex h-9 w-full items-center justify-center rounded-md bg-primary text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+            className="flex h-11 w-full items-center justify-center rounded-md bg-primary text-base font-bold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
           >
             {loading ? (
               <>
