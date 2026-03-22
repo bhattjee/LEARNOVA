@@ -84,9 +84,16 @@ async def seed_bulk() -> None:
                 User.deleted_at.is_(None),
             ),
         )
-        if (existing or 0) >= BULK_COUNT:
+        n_existing = existing or 0
+        if n_existing >= BULK_COUNT:
             print("Bulk seed already applied (bulk learners present). Skipping.")
             return
+        if 0 < n_existing < BULK_COUNT:
+            msg = (
+                f"Partial bulk seed detected ({n_existing} bulk learners). "
+                "Restore or clean the database, then run again."
+            )
+            raise SystemExit(msg)
 
         staff_id = await _ensure_staff_user(session)
 
