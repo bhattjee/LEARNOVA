@@ -10,9 +10,10 @@ from datetime import datetime, timezone
 from typing import Literal
 
 from fastapi import BackgroundTasks, HTTPException, status
-from sqlalchemy import case, func, or_, select
+from sqlalchemy import case, func, not_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import BULK_SEED_TAG
 from app.core.security import hash_password
 from app.core.config import settings
 from app.models.attachment_model import LessonAttachment
@@ -302,7 +303,10 @@ async def get_courses(
 ) -> tuple[list[CourseListItem], int]:
     lesson_stats = _lesson_stats_subquery()
 
-    filters = [Course.deleted_at.is_(None)]
+    filters = [
+        Course.deleted_at.is_(None),
+        not_(Course.tags.contains([BULK_SEED_TAG])),
+    ]
     if user.role == UserRole.INSTRUCTOR:
         filters.append(Course.created_by == user.id)
     if search and search.strip():
@@ -398,6 +402,7 @@ async def _load_course_for_staff(
     q = select(Course).where(
         Course.id == course_id,
         Course.deleted_at.is_(None),
+        not_(Course.tags.contains([BULK_SEED_TAG])),
     )
     if user.role == UserRole.INSTRUCTOR:
         q = q.where(Course.created_by == user.id)
@@ -589,6 +594,7 @@ async def get_course_detail_for_learner(
         select(Course).where(
             Course.id == course_id,
             Course.deleted_at.is_(None),
+            not_(Course.tags.contains([BULK_SEED_TAG])),
         ),
     )
     course = result.scalar_one_or_none()
@@ -732,6 +738,7 @@ async def get_public_courses(
     filters = [
         Course.deleted_at.is_(None),
         Course.is_published.is_(True),
+        not_(Course.tags.contains([BULK_SEED_TAG])),
     ]
     if current_user is None:
         filters.append(Course.visibility == CourseVisibility.EVERYONE)
@@ -850,7 +857,11 @@ async def get_my_courses(
         .join(Course, Course.id == Enrollment.course_id)
         .outerjoin(lesson_stats, lesson_stats.c.course_id == Course.id)
         .outerjoin(pc_sq, pc_sq.c.eid == Enrollment.id)
-        .where(Enrollment.user_id == user.id, Course.deleted_at.is_(None))
+        .where(
+            Enrollment.user_id == user.id,
+            Course.deleted_at.is_(None),
+            not_(Course.tags.contains([BULK_SEED_TAG])),
+        )
         .order_by(Enrollment.enrolled_at.desc())
     )
     result = await db.execute(stmt)
@@ -899,7 +910,11 @@ async def purchase_course_enrollment(
     Admins and instructors may also enroll in unpublished courses for preview purposes.
     Idempotent if already enrolled.
     """
-    filters = [Course.id == course_id, Course.deleted_at.is_(None)]
+    filters = [
+        Course.id == course_id,
+        Course.deleted_at.is_(None),
+        not_(Course.tags.contains([BULK_SEED_TAG])),
+    ]
     # Learners can only purchase published courses; staff can enroll in any course
     if user.role == UserRole.LEARNER:
         filters.append(Course.is_published.is_(True))
@@ -943,7 +958,11 @@ async def complete_course_for_learner(
 ) -> CompleteCourseResult:
     """Mark the learner's enrollment as completed (idempotent if already completed)."""
     c_row = await db.execute(
-        select(Course).where(Course.id == course_id, Course.deleted_at.is_(None)),
+        select(Course).where(
+            Course.id == course_id,
+            Course.deleted_at.is_(None),
+            not_(Course.tags.contains([BULK_SEED_TAG])),
+        ),
     )
     course = c_row.scalar_one_or_none()
     if course is None:

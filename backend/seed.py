@@ -22,14 +22,14 @@ from app.models.user_model import User, UserRole
 
 
 SEED_USERS: list[tuple[str, str, UserRole, str]] = [
-    ("admin@learnova.com", "Admin123!", UserRole.ADMIN, "Admin User"),
+    ("admin@learnova.com", "Admin123!", UserRole.ADMIN, "Rajesh Kapoor"),
     (
         "instructor@learnova.com",
         "Instructor123!",
         UserRole.INSTRUCTOR,
-        "Jane Instructor",
+        "Meera Krishnan",
     ),
-    ("learner@learnova.com", "Learner123!", UserRole.LEARNER, "John Learner"),
+    ("learner@learnova.com", "Learner123!", UserRole.LEARNER, "Rohan Mehta"),
 ]
 
 

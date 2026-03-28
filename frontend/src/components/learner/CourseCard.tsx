@@ -148,53 +148,84 @@ export function LearnerCourseCard({
           ) : null}
         </div>
 
-        {pct != null ? (
-          <div className="mt-3">
-            <div className="mb-1 flex justify-between text-xs text-brand-dark-grey">
-              <span>Progress</span>
-              <span>{Math.round(pct)}% complete</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-brand-light-grey">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-primary to-status-purple transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
-        ) : null}
-
         {course.access_rule === "on_payment" && course.price_cents != null && !enrolled ? (
           <p className="mt-3 text-right text-sm font-bold text-brand-black">
             INR {formatInr(course.price_cents)}
           </p>
         ) : null}
 
-        <div className="mt-4 mt-auto pt-1">
-          {cta.kind === "link" ? (
-            <Link
-              to={showcaseDestination ?? cta.to}
-              className={cn(cta.className, "w-full rounded-xl")}
-            >
-              {cta.label}
-            </Link>
-          ) : (
-            <button
-              type="button"
-              className={cn(
-                cta.className,
-                "w-full rounded-xl",
-                cta.label.startsWith("Continue") &&
-                  "border-status-purple bg-white text-status-purple hover:bg-[#F5F0FF]",
-                cta.label.includes("Buy Course") &&
-                  "bg-status-purple text-white hover:bg-status-purple/90 hover:opacity-95",
-              )}
-              disabled={cta.disabled}
-              onClick={onPrimaryAction}
-            >
-              {cta.label}
-            </button>
-          )}
-        </div>
+        {pct != null ? (
+          <div className="mt-4 mt-auto space-y-2 pt-1">
+            <div className="flex justify-between text-xs text-brand-dark-grey">
+              <span>Progress</span>
+              <span>{Math.round(pct)}% complete</span>
+            </div>
+            <div className="flex flex-nowrap items-center gap-4">
+              <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-brand-light-grey">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-status-purple transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <div className="shrink-0">
+                {cta.kind === "link" ? (
+                  <Link
+                    to={showcaseDestination ?? cta.to}
+                    className={cn(
+                      cta.className,
+                      "inline-flex min-h-[2.5rem] items-center justify-center whitespace-nowrap rounded-xl px-4 py-2 text-sm",
+                    )}
+                  >
+                    {cta.label}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className={cn(
+                      cta.className,
+                      "inline-flex min-h-[2.5rem] items-center justify-center whitespace-nowrap rounded-xl px-4 py-2 text-sm",
+                      cta.label.startsWith("Continue") &&
+                        "border-2 border-status-purple bg-white text-status-purple hover:bg-[#F5F0FF]",
+                      cta.label.includes("Buy Course") &&
+                        "bg-status-purple text-white hover:bg-status-purple/90 hover:opacity-95",
+                    )}
+                    disabled={cta.disabled}
+                    onClick={onPrimaryAction}
+                  >
+                    {cta.label}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 mt-auto pt-1">
+            {cta.kind === "link" ? (
+              <Link
+                to={showcaseDestination ?? cta.to}
+                className={cn(cta.className, "w-full rounded-xl")}
+              >
+                {cta.label}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className={cn(
+                  cta.className,
+                  "w-full rounded-xl",
+                  cta.label.startsWith("Continue") &&
+                    "border-status-purple bg-white text-status-purple hover:bg-[#F5F0FF]",
+                  cta.label.includes("Buy Course") &&
+                    "bg-status-purple text-white hover:bg-status-purple/90 hover:opacity-95",
+                )}
+                disabled={cta.disabled}
+                onClick={onPrimaryAction}
+              >
+                {cta.label}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

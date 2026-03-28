@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/logo.png" />
+    <title id="tour-page-title">Product tour · Learnova</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1D4ED8',
+                        'dark-gray': '#464749',
+                        'light-gray': '#C5CAD3',
+                    },
+                    borderColor: {
+                        'light-gray': '#C5CAD3',
+                    },
+                    fontFamily: { sans: ['Source Sans Pro', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>
+        html {
+            scroll-snap-type: y proximity;
+            scroll-behavior: smooth;
+        }
+
+        .tour-section {
+            scroll-snap-align: start;
+            min-height: min(100vh, 920px);
+            padding: 5rem 0 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .tour-section {
+                padding: 5.5rem 0 2.5rem;
+            }
+        }
+
+        .tour-section-inner {
+            max-width: min(1600px, 100%);
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .tour-section-inner {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .tour-section-inner {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+
+        .tour-step-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #464749;
+            margin-bottom: 1rem;
+        }
+
+        .tour-step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 9999px;
+            background: #EFF6FF;
+            color: #1D4ED8;
+            font-size: 0.65rem;
+            margin-right: 0.5rem;
+        }
+
+        .tour-figure {
+            margin: 0;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 2px solid #C5CAD3;
+            box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.15);
+            background: #f8fafc;
+        }
+
+        .tour-figure img {
+            display: block;
+            width: 100%;
+            height: auto;
+            vertical-align: middle;
+        }
+
+        #tour-main {
+            padding-bottom: 8rem;
+        }
+
+        .tour-dock {
+            pointer-events: none;
+        }
+
+        .tour-dock>* {
+            pointer-events: auto;
+        }
+
+        @keyframes tour-arrow-nudge {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(6px);
+            }
+        }
+
+        .tour-arrow-anim {
+            animation: tour-arrow-nudge 1.6s ease-in-out infinite;
+        }
+
+        .tour-arrow--done .tour-arrow-anim {
+            animation: none;
+        }
+
+        /* Active role in header: blue underline */
+        .tour-nav-link {
+            display: inline-block;
+            border-bottom-width: 2px;
+            border-bottom-style: solid;
+            border-bottom-color: transparent;
+            padding-bottom: 0.25rem;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .tour-nav-link:hover {
+            color: #1D4ED8;
+        }
+
+        .tour-nav-link[aria-current="page"] {
+            color: #1D4ED8;
+            border-bottom-color: #1D4ED8;
+            font-weight: 800;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-dark-gray font-sans antialiased">
+
+    <header
+        class="sticky top-0 z-50 border-b border-light-gray bg-white/95 backdrop-blur-xl">
+        <div class="mx-auto flex h-20 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+            <a href="index.html" class="flex shrink-0 items-center gap-2">
+                <img src="images/logo.png" alt="" class="h-9 w-auto rounded-xl" width="36" height="36" />
+                <span class="text-xl font-bold text-primary tracking-tighter">Learnova</span>
+            </a>
+            <nav class="flex flex-1 flex-wrap items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest sm:gap-6 sm:text-xs lg:gap-10" aria-label="Role tours">
+                <a href="tour.html?role=learner" data-tour-role="learner"
+                    class="tour-nav-link rounded-t-lg px-2 py-1 text-dark-gray">Learner</a>
+                <a href="tour.html?role=instructor" data-tour-role="instructor"
+                    class="tour-nav-link rounded-t-lg px-2 py-1 text-dark-gray">Instructor</a>
+                <a href="tour.html?role=admin" data-tour-role="admin"
+                    class="tour-nav-link rounded-t-lg px-2 py-1 text-dark-gray">Admin</a>
+            </nav>
+            <a href="index.html"
+                class="shrink-0 rounded-2xl border-2 border-light-gray px-4 py-2 text-sm font-bold text-dark-gray hover:border-primary hover:text-primary transition-colors">
+                Home
+            </a>
+        </div>
+    </header>
+
+    <main id="tour-main" class="min-h-screen"></main>
+
+    <div id="tour-indicator"
+        class="tour-dock fixed bottom-0 left-0 right-0 z-40 border-t border-light-gray bg-gradient-to-t from-white via-white to-white/90 px-4 pb-6 pt-4 shadow-[0_-8px_30px_rgba(15,23,42,0.08)]">
+        <div class="mx-auto flex max-w-[1600px] flex-col items-center gap-3 sm:flex-row sm:justify-between sm:px-4">
+            <p id="tour-progress-text" class="text-sm font-semibold text-dark-gray">Step 1 of 1</p>
+            <button type="button" id="tour-scroll-next"
+                class="group flex flex-col items-center gap-1 rounded-2xl border-2 border-primary bg-primary px-8 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition hover:bg-blue-800"
+                aria-label="Scroll to next screen">
+                <span data-next-label class="text-xs font-semibold uppercase tracking-wider opacity-90">Next screen</span>
+                <span class="tour-arrow-anim inline-flex" data-arrow-icon>
+                    <i data-lucide="chevron-down" class="h-7 w-7" aria-hidden="true"></i>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <script src="js/role-tour.js"></script>
+    <script>
+        lucide.createIcons();
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+    </script>
+</body>
+
+</html>

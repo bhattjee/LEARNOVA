@@ -65,6 +65,12 @@
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(6, 120px);
             gap: 2rem;
+            align-content: start;
+        }
+
+        /* Learner hub only needs 4 row tracks; 6 rows left two empty bands below the cards */
+        .bento-grid--learner {
+            grid-template-rows: repeat(4, 120px);
         }
 
         @media (max-width: 1024px) {
@@ -72,6 +78,10 @@
                 grid-template-columns: repeat(2, 1fr);
                 grid-template-rows: auto;
                 height: auto !important;
+            }
+
+            .bento-grid--learner {
+                grid-template-rows: auto;
             }
         }
 
@@ -154,23 +164,51 @@
 
     <!-- Navbar -->
     <nav
-        class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-light-gray h-20 flex items-center px-6 sm:px-12">
-        <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-3">
+        class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-light-gray min-h-20 flex items-center px-4 sm:px-8 lg:px-12 py-2">
+        <div class="max-w-7xl mx-auto w-full flex flex-wrap items-center justify-between gap-3">
+            <a href="index.html" class="flex items-center gap-3 shrink-0">
                 <img src="images/logo.png" alt="" class="h-10 w-auto rounded-xl shadow-lg shadow-primary/30" />
-                <span class="text-3xl font-bold text-primary tracking-tighter">Learnova</span>
+                <span class="text-2xl sm:text-3xl font-bold text-primary tracking-tighter">Learnova</span>
             </a>
-            <div class="hidden lg:flex space-x-12 text-sm font-bold uppercase tracking-widest">
-                <a href="#learner" class="text-primary hover:opacity-70 transition-all">Learning Hub</a>
-                <a href="#instructor" class="hover:text-primary transition-all">Instructor Studio</a>
+            <div
+                class="order-3 lg:order-none w-full lg:w-auto flex flex-wrap items-center justify-center gap-4 sm:gap-8 lg:gap-10 text-[10px] sm:text-xs font-bold uppercase tracking-widest lg:text-sm">
+                <a href="tour.html?role=learner" class="text-primary hover:opacity-70 transition-all">Learner</a>
+                <a href="tour.html?role=instructor" class="hover:text-primary transition-all">Instructor</a>
+                <a href="tour.html?role=admin" class="hover:text-primary transition-all">Admin</a>
                 <a href="#faq" class="hover:text-primary transition-all">FAQ</a>
                 <a href="blog.html" class="hover:text-primary transition-all">Blog</a>
             </div>
-            <button type="button" data-learnova="login"
-                class="bg-primary text-white px-8 py-3 rounded-2xl text-base font-bold shadow-2xl shadow-primary/30 hover:bg-blue-800 hover:scale-105 transition-all">Get
+            <button type="button" id="btn-open-role-modal"
+                class="ml-auto lg:ml-0 bg-primary text-white px-5 sm:px-8 py-2.5 sm:py-3 rounded-2xl text-sm sm:text-base font-bold shadow-2xl shadow-primary/30 hover:bg-blue-800 hover:scale-105 transition-all shrink-0">Get
                 Started</button>
         </div>
     </nav>
+
+    <!-- Role picker (opens from Get Started) -->
+    <div id="role-modal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4" aria-hidden="true"
+        role="dialog" aria-modal="true" aria-labelledby="role-modal-title">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" data-close-role-modal tabindex="-1"></div>
+        <div
+            class="relative z-10 w-full max-w-lg rounded-3xl border-2 border-light-gray bg-white p-6 sm:p-8 shadow-2xl">
+            <h2 id="role-modal-title" class="text-2xl font-bold text-dark-gray">Choose your role</h2>
+            <p class="mt-2 text-sm text-gray-500">Check out the step-by-step guide: Sign up, log in, and explore the dashboards and key screens.</p>
+            <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                <a href="tour.html?role=learner"
+                    class="flex flex-col items-center justify-center rounded-2xl border-2 border-light-gray bg-gray-50/80 px-4 py-6 text-center font-bold uppercase tracking-wide text-dark-gray transition hover:border-primary hover:bg-blue-50 hover:text-primary">
+                    Learner</a>
+                <a href="tour.html?role=instructor"
+                    class="flex flex-col items-center justify-center rounded-2xl border-2 border-light-gray bg-gray-50/80 px-4 py-6 text-center font-bold uppercase tracking-wide text-dark-gray transition hover:border-primary hover:bg-blue-50 hover:text-primary">
+                    Instructor</a>
+                <a href="tour.html?role=admin"
+                    class="flex flex-col items-center justify-center rounded-2xl border-2 border-light-gray bg-gray-50/80 px-4 py-6 text-center font-bold uppercase tracking-wide text-dark-gray transition hover:border-primary hover:bg-blue-50 hover:text-primary">
+                    Admin</a>
+            </div>
+            <button type="button" data-close-role-modal
+                class="mt-6 w-full rounded-xl border-2 border-light-gray py-3 text-sm font-bold text-dark-gray hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="relative pt-24 pb-32 px-6 sm:px-12 overflow-hidden bg-white">
@@ -190,20 +228,20 @@
                 Build, manage, and master your future in one place.
             </p>
             <div class="flex flex-col sm:flex-row justify-center gap-6">
-                <button type="button" data-learnova="login"
+                <button type="button" id="hero-open-role-modal"
                     class="bg-primary text-white px-12 py-5 rounded-3xl text-xl font-bold shadow-2xl shadow-primary/20 hover:bg-blue-800 hover:-translate-y-1 transition-all flex items-center justify-center gap-3">
                     Start Learning Today <i data-lucide="arrow-right" class="w-6 h-6"></i>
                 </button>
-                <button type="button" data-learnova="register"
-                    class="bg-white border-2 border-light-gray text-dark-gray px-12 py-5 rounded-3xl text-xl font-bold hover:border-primary hover:text-primary transition-all">
+                <a href="tour.html?role=instructor"
+                    class="bg-white border-2 border-light-gray text-dark-gray px-12 py-5 rounded-3xl text-xl font-bold hover:border-primary hover:text-primary transition-all text-center">
                     Become an Instructor
-                </button>
+                </a>
             </div>
         </div>
     </section>
 
     <!-- Section 1: Learner Hub -->
-    <section id="learner" class="py-24 bg-gray-50/50 px-6 sm:px-12 border-t border-light-gray">
+    <section id="learner" class="pt-24 pb-[74px] sm:pb-[42px] bg-gray-50/50 px-6 sm:px-12 border-t border-light-gray">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
                 <div class="max-w-2xl">
@@ -218,7 +256,7 @@
                     All Hub Features <i data-lucide="chevron-right" class="w-5 h-5"></i></button>
             </div>
 
-            <div class="bento-grid h-auto lg:h-[900px]">
+            <div class="bento-grid bento-grid--learner h-auto">
                 <!-- Profile Card -->
                 <div class="bento-card col-span-2 lg:col-span-1 lg:row-span-4 bg-white">
                     <div class="flex flex-col items-center text-center mb-10 pt-4">
@@ -301,8 +339,8 @@
                 <!-- Library Growth -->
                 <div
                     class="bento-card col-span-2 lg:col-span-1 lg:row-span-2 bg-dark-gray text-white border-none flex flex-col justify-center">
-                    <h4 class="text-2xl font-bold mb-4">2.4k+ Courses</h4>
-                    <p class="text-sm opacity-60 font-medium mb-6">New lessons added every week by global experts.</p>
+                    <h4 class="text-2xl font-bold mb-4">180+ Programs</h4>
+                    <p class="text-sm opacity-60 font-medium mb-6">Curated paths from practitioners—updated as tools evolve.</p>
                     <button type="button" data-learnova="courses"
                         class="w-fit text-xs font-bold uppercase tracking-widest py-2 px-4 bg-white/10 rounded-xl hover:bg-white/20 transition-all">Browse
                         All</button>
@@ -312,7 +350,7 @@
     </section>
 
     <!-- Section 2: Instructor Studio -->
-    <section id="instructor" class="py-24 bg-white px-6 sm:px-12 border-t border-light-gray">
+    <section id="instructor" class="mt-0 pt-8 sm:pt-10 pb-20 sm:pb-24 bg-white px-6 sm:px-12 border-t border-light-gray">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
                 <div class="max-w-2xl">
@@ -333,7 +371,7 @@
                     <div class="space-y-10">
                         <div>
                             <p class="text-sm font-bold text-gray-400 mb-2">Total Participants</p>
-                            <h4 class="text-5xl font-bold text-dark-gray tracking-tighter">45,280</h4>
+                            <h4 class="text-5xl font-bold text-dark-gray tracking-tighter">3,240</h4>
                             <p class="text-xs font-bold text-accent-green mt-2 flex items-center gap-1">
                                 <i data-lucide="trending-up" class="w-3 h-3"></i> +12% this month
                             </p>
@@ -383,8 +421,8 @@
                                     PUBLISHED</div>
                                 <h4 class="text-2xl font-bold mb-2 leading-tight">Mastering Dynamic UI with Tailwind
                                 </h4>
-                                <p class="text-sm text-gray-400 font-medium mb-8">45 Lessons · 12,000 active students ·
-                                    560 reviews</p>
+                                <p class="text-sm text-gray-400 font-medium mb-8">24 lessons · 320+ active learners ·
+                                    48 reviews</p>
                                 <div class="flex gap-4">
                                     <button
                                         class="flex-1 bg-primary text-white py-4 rounded-2xl font-bold hover:bg-blue-800 transition-all">Edit
@@ -528,8 +566,9 @@
                 <div>
                     <h6 class="text-xs font-bold uppercase tracking-[0.3em] text-gray-500 mb-10">Resources</h6>
                     <ul class="space-y-6 text-lg font-medium text-gray-400">
-                        <li><a href="#learner" class="hover:text-white transition-all">Learning Hub</a></li>
-                        <li><a href="#instructor" class="hover:text-white transition-all">Instructor Studio</a></li>
+                        <li><a href="tour.html?role=learner" class="hover:text-white transition-all">Learner tour</a></li>
+                        <li><a href="tour.html?role=instructor" class="hover:text-white transition-all">Instructor tour</a></li>
+                        <li><a href="tour.html?role=admin" class="hover:text-white transition-all">Admin tour</a></li>
                         <li><a href="blog.html" class="hover:text-white transition-all">Blog & Insights</a></li>
                     </ul>
                 </div>
@@ -571,6 +610,34 @@
     <script src="js/app-links.js"></script>
     <script>
         lucide.createIcons();
+
+        (function () {
+            var modal = document.getElementById('role-modal');
+            function openModal() {
+                if (!modal) return;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeModal() {
+                if (!modal) return;
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+            var openBtn = document.getElementById('btn-open-role-modal');
+            var heroBtn = document.getElementById('hero-open-role-modal');
+            if (openBtn) openBtn.addEventListener('click', openModal);
+            if (heroBtn) heroBtn.addEventListener('click', openModal);
+            document.querySelectorAll('[data-close-role-modal]').forEach(function (el) {
+                el.addEventListener('click', closeModal);
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal();
+            });
+        })();
 
         // Simple toggle logic for Lesson Type cards
         document.querySelectorAll('.lesson-type-card').forEach(card => {

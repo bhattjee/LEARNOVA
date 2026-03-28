@@ -1,10 +1,17 @@
 """
-seed_bulk.py — Inserts ~300 rows per core module for load/dev testing.
+seed_bulk.py — Inserts ~300 rows per core module for load testing only.
 
 Prerequisites: migrations applied (`alembic upgrade head`), `.env` configured.
 Recommended: run `python seed.py` first so admin/instructor/learner exist.
 
 Usage (from backend/): python seed_bulk.py
+
+To remove this data and restore a clean demo DB, run:
+  python cleanup_bulk_seed.py
+or replace everything with:
+  python demo_seed.py
+
+API list/catalog/reporting endpoints exclude `bulk-seed` tagged courses from responses.
 
 Idempotent: skips if 300+ bulk learners already exist (email bulk-learner-*@learnova.local).
 """

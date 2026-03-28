@@ -6,10 +6,11 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, not_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.constants import BULK_SEED_TAG
 from app.models.course_model import Course, CourseAccessRule
 from app.models.enrollment_model import Enrollment, EnrollmentStatus
 from app.models.lesson_model import Lesson
@@ -38,6 +39,7 @@ async def _load_published_course(db: AsyncSession, course_id: uuid.UUID) -> Cour
             Course.id == course_id,
             Course.deleted_at.is_(None),
             Course.is_published.is_(True),
+            not_(Course.tags.contains([BULK_SEED_TAG])),
         ),
     )
     course = result.scalar_one_or_none()

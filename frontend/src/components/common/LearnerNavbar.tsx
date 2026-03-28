@@ -24,14 +24,14 @@ function initials(fullName: string): string {
 function navLinkClassForVariant(variant: "default" | "dark") {
   return ({ isActive }: { isActive: boolean }) =>
     cn(
-      "text-sm font-medium transition-colors",
+      "flex h-16 items-center border-b-2 px-1 text-sm font-medium transition-colors",
       variant === "dark"
         ? isActive
-          ? "border-b-2 border-[#9333EA] pb-[22px] text-[#D8B4FE]"
-          : "border-b-2 border-transparent pb-[22px] text-zinc-400 hover:text-white"
+          ? "border-[#9333EA] text-[#D8B4FE]"
+          : "border-transparent text-zinc-400 hover:text-white"
         : isActive
-          ? "border-b-2 border-primary pb-[22px] text-primary"
-          : "border-b-2 border-transparent pb-[22px] text-brand-dark-grey hover:text-brand-black",
+          ? "border-primary text-primary"
+          : "border-transparent text-brand-dark-grey hover:text-brand-black",
     );
 }
 
@@ -71,7 +71,7 @@ export function LearnerNavbar({ variant = "default" }: LearnerNavbarProps) {
         </Link>
 
         <nav
-          className="absolute left-1/2 top-0 flex h-16 -translate-x-1/2 items-stretch gap-10"
+          className="absolute left-1/2 top-0 flex h-16 -translate-x-1/2 items-center justify-center gap-10"
           aria-label="Main"
         >
           <NavLink to="/courses" className={navLinkClass}>

@@ -7,9 +7,10 @@ import uuid
 from typing import Literal
 
 from fastapi import HTTPException, status
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, not_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import BULK_SEED_TAG
 from app.models.course_model import Course
 from app.models.enrollment_model import Enrollment, EnrollmentStatus
 from app.models.lesson_model import Lesson
@@ -50,6 +51,7 @@ def _base_scope_conditions(
     conds = [
         Course.deleted_at.is_(None),
         User.deleted_at.is_(None),
+        not_(Course.tags.contains([BULK_SEED_TAG])),
     ]
     if user.role == UserRole.INSTRUCTOR:
         conds.append(Course.created_by == user.id)
@@ -92,7 +94,11 @@ async def get_reporting_data(
 
     if course_id is not None:
         course = await db.scalar(
-            select(Course).where(Course.id == course_id, Course.deleted_at.is_(None)),
+            select(Course).where(
+                Course.id == course_id,
+                Course.deleted_at.is_(None),
+                not_(Course.tags.contains([BULK_SEED_TAG])),
+            ),
         )
         if course is None:
             raise HTTPException(
