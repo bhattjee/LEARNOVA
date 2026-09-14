@@ -1,5 +1,13 @@
 # Learnova
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11+-green.svg)
+![Node](https://img.shields.io/badge/node-18+-green.svg)
+![React](https://img.shields.io/badge/react-18-blue.svg)
+![FastAPI](https://img.shields.io/badge/fastapi-0.111-teal.svg)
+![TypeScript](https://img.shields.io/badge/typescript-5.6-blue.
+svg)
+
 A modern eLearning platform with a React (Vite + TypeScript) frontend and FastAPI backend.
 
 ## Features
